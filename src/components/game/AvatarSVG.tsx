@@ -15,9 +15,12 @@ const AVATAR_CONFIGS: Record<string, { body: string; accent: string; features: s
   "#F8FAFC": { body: "#CBD5E1", accent: "#94A3B8", features: "#F1F5F9" },
 };
 
-const SHAPES: Array<(config: { body: string; accent: string; features: string }) => React.ReactNode> = [
+type AvatarConfig = { body: string; accent: string; features: string };
+type ShapeRenderer = (config: AvatarConfig) => React.ReactElement;
+
+const SHAPES: ShapeRenderer[] = [
   // Cat-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <circle cx="50" cy="55" r="32" fill={c.body} />
       <polygon points="25,30 35,8 45,28" fill={c.body} />
@@ -37,7 +40,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Bear-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <circle cx="30" cy="30" r="14" fill={c.body} />
       <circle cx="70" cy="30" r="14" fill={c.body} />
@@ -54,7 +57,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Fox-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <polygon points="20,15 35,50 5,50" fill={c.body} />
       <polygon points="80,15 65,50 95,50" fill={c.body} />
@@ -71,7 +74,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Owl-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <ellipse cx="50" cy="55" rx="30" ry="32" fill={c.body} />
       <polygon points="35,25 50,10 65,25" fill={c.body} />
@@ -87,7 +90,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Alien-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <ellipse cx="50" cy="55" rx="28" ry="32" fill={c.body} />
       <ellipse cx="50" cy="28" rx="18" ry="10" fill={c.accent} />
@@ -100,7 +103,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Ghost-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <path d="M25,50 Q25,20 50,20 Q75,20 75,50 L75,75 Q68,68 60,75 Q52,68 44,75 Q36,68 28,75 Z" fill={c.body} />
       <ellipse cx="38" cy="45" rx="5" ry="6" fill="white" />
@@ -113,7 +116,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Robot-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <rect x="25" y="25" width="50" height="45" rx="8" fill={c.body} />
       <rect x="42" y="15" width="16" height="12" rx="3" fill={c.accent} />
@@ -129,7 +132,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Panda-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <circle cx="30" cy="30" r="14" fill="#1a1a2e" />
       <circle cx="70" cy="30" r="14" fill="#1a1a2e" />
@@ -143,7 +146,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Zombie-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <ellipse cx="50" cy="55" rx="28" ry="30" fill={c.body} />
       <ellipse cx="50" cy="25" rx="12" ry="6" fill={c.accent} />
@@ -156,7 +159,7 @@ const SHAPES: Array<(config: { body: string; accent: string; features: string })
     </svg>
   ),
   // Monster-like
-  (c) => (svg: boolean) => (
+  (c) => (
     <svg viewBox="0 0 100 100" className="w-full h-full">
       <ellipse cx="50" cy="58" rx="32" ry="30" fill={c.body} />
       <ellipse cx="30" cy="30" rx="10" ry="12" fill={c.body} />
@@ -191,7 +194,7 @@ export function AvatarSVG({
       className={`rounded-full overflow-hidden flex items-center justify-center ${className}`}
       style={{ width: size, height: size, backgroundColor: config.body + "30" }}
     >
-      {renderShape(config)(true)}
+      {renderShape(config)}
     </div>
   );
 }
