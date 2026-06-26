@@ -1,6 +1,6 @@
 # Imposter - Social Deduction Game
 
-A full-stack social deduction game built with Next.js, Socket.io, PostgreSQL, and Redis.
+A full-stack social deduction game built with Next.js, Socket.io, PostgreSQL, and Redis
 
 ## Features
 
