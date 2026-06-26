@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-imposter-dark text-white antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-imposter-red hover:bg-imposter-red-dark text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply bg-imposter-dark-lighter hover:bg-imposter-dark-light text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 border border-white/10;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-white/10 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-imposter-dark-light rounded-2xl border border-white/10 shadow-xl;
+  }
+
+  .input-field {
+    @apply w-full bg-imposter-dark-lighter border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-imposter-red focus:ring-2 focus:ring-imposter-red/20 transition-all;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-crew {
+    @apply badge bg-blue-500/20 text-blue-400 border border-blue-500/30;
+  }
+
+  .badge-imposter {
+    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .avatar {
+    @apply w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center text-white font-bold text-lg;
+  }
+
+  .avatar-sm {
+    @apply w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white font-bold text-sm;
+  }
+
+  .avatar-lg {
+    @apply w-16 h-16 rounded-full border-2 border-white/30 flex items-center justify-center text-white font-bold text-2xl;
+  }
+
+  .game-container {
+    @apply w-full h-screen overflow-hidden relative;
+  }
+
+  .game-hud {
+    @apply absolute top-4 left-4 right-4 flex justify-between items-start z-10;
+  }
+
+  .game-panel {
+    @apply bg-black/60 backdrop-blur-sm rounded-xl border border-white/10 p-3;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-imposter-red to-imposter-purple;
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1s ease-out infinite;
+}

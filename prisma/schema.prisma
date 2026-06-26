@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  username      String    @unique
+  email         String    @unique
+  password      String
+  avatar        String    @default("default")
+  color         String    @default("#EF4444")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  games         GamePlayer[]
+  hostedGames   Game[]
+  messages      Message[]
+  votes         Vote[]          @relation("Voter")
+  votesReceived Vote[]          @relation("Target")
+  stats         UserStats?
+
+  @@map("users")
+}
+
+model UserStats {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gamesPlayed   Int      @default(0)
+  gamesWon      Int      @default(0)
+  gamesLost     Int      @default(0)
+  imposterGames Int      @default(0)
+  imposterWins  Int      @default(0)
+  crewGames     Int      @default(0)
+  crewWins      Int      @default(0)
+  totalKills    Int      @default(0)
+  totalTasks    Int      @default(0)
+  elo           Float    @default(1000)
+  winStreak     Int      @default(0)
+  bestStreak    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("user_stats")
+}
+
+model Game {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  hostId        String
+  host          User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  status        GameStatus   @default(WAITING)
+  maxPlayers    Int          @default(10)
+  minPlayers    Int          @default(4)
+  numImposters  Int          @default(1)
+  mapName       String       @default("skeld")
+  discussionTime Int          @default(60)
+  votingTime    Int          @default(30)
+  killCooldown  Int          @default(25)
+  taskCount     Int          @default(5)
+  speed         Float        @default(1.0)
+  emergencyMeetings Int      @default(1)
+  isPublic      Boolean      @default(false)
+  isPassAndPlay Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  startedAt     DateTime?
+  endedAt       DateTime?
+
+  players       GamePlayer[]
+  rounds        Round[]
+  meetings      Meeting[]
+  gameTasks     GameTask[]
+  messages      Message[]
+
+  @@map("games")
+}
+
+model GamePlayer {
+  id            String        @id @default(uuid())
+  gameId        String
+  game          Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          PlayerRole    @default(CREW)
+  alive         Boolean       @default(true)
+  isReady       Boolean       @default(false)
+  x             Float         @default(0)
+  y             Float         @default(0)
+  speed         Float         @default(1.0)
+  tasksDone     Int           @default(0)
+  kills         Int           @default(0)
+  votes         Int           @default(0)
+  joinedAt      DateTime      @default(now())
+
+  tasks         GameTask[]
+  messages      Message[]
+
+  @@unique([gameId, userId])
+  @@map("game_players")
+}
+
+model Round {
+  id            String      @id @default(uuid())
+  gameId        String
+  game          Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  roundNumber   Int
+  status        RoundStatus @default(ACTIVE)
+  killerId      String?
+  victimId      String?
+  createdAt     DateTime    @default(now())
+  endedAt       DateTime?
+
+  meetings      Meeting[]
+
+  @@map("rounds")
+}
+
+model Meeting {
+  id            String       @id @default(uuid())
+  gameId        String
+  game          Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  roundId       String
+  round         Round        @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  callerId      String
+  type          MeetingType  @default(EMERGENCY)
+  status        MeetingStatus @default(VOTING)
+  discussionEnd DateTime?
+  votingEnd     DateTime?
+  createdAt     DateTime     @default(now())
+  endedAt       DateTime?
+
+  votes         Vote[]
+  messages      Message[]
+
+  @@map("meetings")
+}
+
+model Vote {
+  id            String    @id @default(uuid())
+  meetingId     String
+  meeting       Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  voterId       String
+  voter         User      @relation("Voter", fields: [voterId], references: [id], onDelete: Cascade)
+  targetId      String?
+  target        User?     @relation("Target", fields: [targetId], references: [id], onDelete: Cascade)
+  isSkip        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  @@unique([meetingId, voterId])
+  @@map("votes")
+}
+
+model GameTask {
+  id            String     @id @default(uuid())
+  gameId        String
+  game         Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerId      String
+  player        GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  taskType      TaskType
+  taskName      String
+  completed     Boolean    @default(false)
+  x             Float
+  y             Float
+  completedAt   DateTime?
+  createdAt     DateTime   @default(now())
+
+  @@map("game_tasks")
+}
+
+model Message {
+  id            String    @id @default(uuid())
+  gameId        String
+  game          Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  playerId      String?
+  player        GamePlayer? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  meetingId     String?
+  meeting       Meeting?  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  content       String
+  type          MessageType @default(TEXT)
+  createdAt     DateTime  @default(now())
+
+  @@map("messages")
+}
+
+enum GameStatus {
+  WAITING
+  STARTING
+  PLAYING
+  MEETING
+  VOTING
+  EJECTING
+  ENDED
+}
+
+enum PlayerRole {
+  CREW
+  IMPOSTER
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  VOTE
+}
+
+enum RoundStatus {
+  ACTIVE
+  ENDED
+}
+
+enum MeetingType {
+  EMERGENCY
+  BODY_REPORTED
+}
+
+enum MeetingStatus {
+  DISCUSSION
+  VOTING
+  ENDED
+}
+
+enum TaskType {
+  WIRE_FIX
+  CARD_SWIPE
+  UPLOAD_DATA
+  DOWNLOAD_DATA
+  FUEL_ENGINE
+  ALIGN_ENGINE
+  CHART_COURSE
+  STERILIZE_SPECIMEN
+  CLEAN_OXYGEN_FILTER
+  EMPTY_GARBAGE
+  REACTOR_STARTUP
+  OPEN_MANIFOLDS
+  PRIMESHIELD
+  RESTORE_POWER
+  FIX_WIRING
+}
