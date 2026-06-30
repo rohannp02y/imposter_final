@@ -249,7 +249,7 @@ export default function RevealPage() {
                   </div>
                 )}
 
-                <p className="text-white/40 text-sm mb-6">No peeking, bhai! 👀</p>
+                <p className="text-white/40 text-base mb-6">No peeking!</p>
 
                 <button onClick={handleNext} className="btn-secondary w-full py-3">
                   {currentRevealIndex < playerRoles.length - 1
