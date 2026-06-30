@@ -15,54 +15,62 @@
 
   body {
     @apply bg-imposter-dark text-white antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-      Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-family: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-imposter-red hover:bg-imposter-red-dark text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl;
+    @apply bg-accent-primary hover:bg-accent-primary-hover text-white font-medium py-3 px-6 rounded-xl transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg;
   }
 
   .btn-secondary {
-    @apply bg-imposter-dark-lighter hover:bg-imposter-dark-light text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 border border-white/10;
+    @apply bg-surface hover:bg-surface-hover text-white font-medium py-3 px-6 rounded-xl transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.98] border border-border;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-white/10 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200;
+    @apply bg-transparent hover:bg-white/10 text-white font-medium py-2 px-4 rounded-lg transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply bg-accent-danger hover:bg-red-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-150;
   }
 
   .card {
-    @apply bg-imposter-dark-light rounded-2xl border border-white/10 shadow-xl;
+    @apply bg-surface rounded-2xl border border-border shadow-lg;
   }
 
   .input-field {
-    @apply w-full bg-imposter-dark-lighter border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-imposter-red focus:ring-2 focus:ring-imposter-red/20 transition-all;
+    @apply w-full bg-imposter-dark border border-border rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all;
   }
 
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
   }
 
-  .badge-crew {
-    @apply badge bg-blue-500/20 text-blue-400 border border-blue-500/30;
+  .badge-accent {
+    @apply badge bg-accent-primary/20 text-accent-primary border border-accent-primary/30;
   }
 
-  .badge-imposter {
-    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  .badge-success {
+    @apply badge bg-accent-success/20 text-accent-success border border-accent-success/30;
+  }
+
+  .badge-danger {
+    @apply badge bg-accent-danger/20 text-accent-danger border border-accent-danger/30;
   }
 
   .avatar {
-    @apply w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center text-white font-bold text-lg;
+    @apply w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-white font-bold text-lg;
   }
 
   .avatar-sm {
-    @apply w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white font-bold text-sm;
+    @apply w-8 h-8 rounded-full border border-border flex items-center justify-center text-white font-bold text-sm;
   }
 
   .avatar-lg {
-    @apply w-16 h-16 rounded-full border-2 border-white/30 flex items-center justify-center text-white font-bold text-2xl;
+    @apply w-16 h-16 rounded-full border-2 border-border flex items-center justify-center text-white font-bold text-2xl;
   }
 
   .game-container {
@@ -74,29 +82,81 @@
   }
 
   .game-panel {
-    @apply bg-black/60 backdrop-blur-sm rounded-xl border border-white/10 p-3;
+    @apply bg-black/60 backdrop-blur-sm rounded-xl border border-border p-3;
+  }
+
+  .icon-card {
+    @apply w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg;
+  }
+
+  .icon-card-sm {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center shadow-md;
+  }
+
+  .icon-card-lg {
+    @apply w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-imposter-red to-imposter-purple;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-primary to-purple-500;
+  }
+
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-danger to-orange-500;
   }
 
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    @apply bg-white/5 backdrop-blur-md border border-border;
   }
 
-  .glow-red {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(113, 112, 255, 0.4);
   }
 
-  .glow-blue {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  .glow-success {
+    box-shadow: 0 0 20px rgba(0, 186, 124, 0.4);
   }
 
-  .glow-green {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  .glow-danger {
+    box-shadow: 0 0 20px rgba(235, 87, 87, 0.4);
+  }
+
+  .gradient-green {
+    @apply bg-gradient-to-br from-green-500 to-green-600;
+  }
+
+  .gradient-teal {
+    @apply bg-gradient-to-br from-teal-500 to-teal-600;
+  }
+
+  .gradient-cyan {
+    @apply bg-gradient-to-br from-cyan-500 to-cyan-600;
+  }
+
+  .gradient-blue {
+    @apply bg-gradient-to-br from-blue-500 to-blue-600;
+  }
+
+  .gradient-purple {
+    @apply bg-gradient-to-br from-purple-500 to-purple-600;
+  }
+
+  .gradient-magenta {
+    @apply bg-gradient-to-br from-pink-500 to-pink-600;
+  }
+
+  .gradient-red {
+    @apply bg-gradient-to-br from-red-500 to-red-600;
+  }
+
+  .gradient-orange {
+    @apply bg-gradient-to-br from-orange-500 to-orange-600;
+  }
+
+  .gradient-yellow {
+    @apply bg-gradient-to-br from-yellow-500 to-yellow-600;
   }
 }
 
@@ -132,8 +192,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse-ring {
@@ -156,11 +220,6 @@
   }
 }
 
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
-}
-
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
 }
@@ -174,42 +233,7 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
-}
-
-.animate-wiggle {
-  animation: wiggle 0.5s ease-in-out;
-}
-
-/* Nepal-themed gradient text */
-.text-gradient-nepal {
-  background: linear-gradient(135deg, #EF4444, #A855F7, #3B82F6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Hover effects */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-}
-
-/* Game-specific styles */
-.game-glow {
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3), inset 0 0 30px rgba(239, 68, 68, 0.1);
-}
-
-.imposter-shadow {
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
-}
-
-.crew-shadow {
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
 }

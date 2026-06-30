@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Gamepad2, Loader2 } from "lucide-react";
+import { EyeIcon, EyeOffIcon, GamepadIcon, LoaderIcon } from "@/components/icons/SvgIcons";
 import { playSound } from "@/lib/sounds";
 
 export default function RegisterPage() {
@@ -71,8 +71,8 @@ export default function RegisterPage() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-imposter-red rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Gamepad2 className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-accent-primary to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <GamepadIcon size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-white/50 mt-2">Join the imposter hunt</p>
@@ -81,7 +81,7 @@ export default function RegisterPage() {
         <div className="card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+              <div className="bg-accent-danger/20 border border-accent-danger/30 text-accent-danger px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -136,9 +136,9 @@ export default function RegisterPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOffIcon size={20} />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <EyeIcon size={20} />
                   )}
                 </button>
               </div>
@@ -164,7 +164,7 @@ export default function RegisterPage() {
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                <LoaderIcon size={20} className="inline mr-2" />
               ) : null}
               {loading ? "Creating account..." : "Create Account"}
             </button>
@@ -175,7 +175,7 @@ export default function RegisterPage() {
               Already have an account?{" "}
               <Link
                 href="/auth/login"
-                className="text-imposter-red hover:text-imposter-red-dark"
+                className="text-accent-primary hover:text-accent-primary-hover"
               >
                 Sign in
               </Link>

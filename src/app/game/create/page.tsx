@@ -1,25 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Gamepad2,
-  Users,
-  Settings,
-  Loader2,
-  Copy,
-  Check,
-  Globe,
-  Lock,
-} from "lucide-react";
-import { useSocket } from "@/hooks/useSocket";
+  GamepadIcon,
+  SettingsIcon,
+  LoaderIcon,
+  CopyIcon,
+  CheckIcon,
+} from "@/components/icons/SvgIcons";
 import { COLORS } from "@/types";
 import { playSound } from "@/lib/sounds";
 
 export default function CreateGamePage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#EF4444");
@@ -35,64 +30,22 @@ export default function CreateGamePage() {
     votingTime: 30,
     killCooldown: 25,
     taskCount: 5,
-    isPublic: false,
     isPassAndPlay: false,
   });
 
-  const { emit, on } = useSocket(userId);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("imposter_user");
-    if (stored) {
-      const user = JSON.parse(stored);
-      setUserId(user.id);
-      setUsername(user.username);
-    } else {
-      const tempId = `temp_${Date.now()}`;
-      const tempName = `Player${Math.floor(Math.random() * 9999)}`;
-      localStorage.setItem(
-        "imposter_user",
-        JSON.stringify({ id: tempId, username: tempName })
-      );
-      setUserId(tempId);
-      setUsername(tempName);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!on) return;
-
-    const cleanupCreated = on("room:created", (data: unknown) => {
-      const d = data as { code: string };
-      playSound("player_join");
-      setRoomCode(d.code);
-      setCreated(true);
-    });
-
-    const cleanupError = on("room:error", (data: unknown) => {
-      const d = data as { message: string };
-      alert(d.message);
-      setLoading(false);
-    });
-
-    return () => {
-      cleanupCreated();
-      cleanupError();
-    };
-  }, [on]);
-
-  const handleCreate = async () => {
-    if (!userId || !username) return;
+  const handleCreate = () => {
+    if (!username) return;
     playSound("button_click");
     setLoading(true);
 
-    emit("room:create", {
-      userId,
-      username,
-      avatar: selectedColor,
-      color: selectedColor,
-      settings,
-    });
+    // Generate a room code
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setTimeout(() => {
+      setRoomCode(code);
+      setCreated(true);
+      setLoading(false);
+      playSound("player_join");
+    }, 1000);
   };
 
   const handleCopyCode = () => {
@@ -111,15 +64,15 @@ export default function CreateGamePage() {
           className="w-full max-w-md"
         >
           <div className="card p-8 text-center">
-            <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Check className="w-8 h-8 text-green-500" />
+            <div className="w-16 h-16 bg-accent-success/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <CheckIcon size={32} className="text-accent-success" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Room Created!</h2>
             <p className="text-white/50 mb-6">Share this code with your friends</p>
 
-            <div className="bg-imposter-dark-lighter rounded-xl p-6 mb-6">
+            <div className="bg-imposter-dark rounded-xl p-6 mb-6">
               <div className="text-sm text-white/50 mb-2">Room Code</div>
-              <div className="text-4xl font-mono font-bold tracking-widest text-imposter-red">
+              <div className="text-4xl font-mono font-bold tracking-widest text-accent-primary">
                 {roomCode}
               </div>
             </div>
@@ -130,22 +83,22 @@ export default function CreateGamePage() {
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4 inline mr-2" />
+                  <CheckIcon size={16} className="inline mr-2" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 inline mr-2" />
+                  <CopyIcon size={16} className="inline mr-2" />
                   Copy Code
                 </>
               )}
             </button>
 
             <button
-              onClick={() => router.push(`/game/${roomCode}`)}
+              onClick={() => router.push("/game/pass-and-play/play")}
               className="btn-primary w-full"
             >
-              Enter Room
+              Start Game
             </button>
           </div>
         </motion.div>
@@ -167,23 +120,30 @@ export default function CreateGamePage() {
           <div className="space-y-6">
             <div className="card p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Gamepad2 className="w-5 h-5 text-imposter-red" />
+                <GamepadIcon size={20} className="text-accent-primary" />
                 Your Character
               </h2>
 
               <div className="flex items-center gap-6">
                 <div
-                  className="w-20 h-20 rounded-full border-4 border-white/20 flex items-center justify-center"
+                  className="w-20 h-20 rounded-full border-4 border-border flex items-center justify-center"
                   style={{ backgroundColor: selectedColor }}
                 >
                   <span className="text-2xl font-bold text-white">
-                    {username[0]?.toUpperCase()}
+                    {username ? username[0]?.toUpperCase() : "?"}
                   </span>
                 </div>
 
                 <div className="flex-1">
                   <div className="text-sm text-white/50 mb-2">Name</div>
-                  <div className="font-medium">{username}</div>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="input-field"
+                    placeholder="Enter your name"
+                    maxLength={15}
+                  />
                 </div>
               </div>
 
@@ -208,7 +168,7 @@ export default function CreateGamePage() {
 
             <div className="card p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-imposter-red" />
+                <SettingsIcon size={20} className="text-accent-primary" />
                 Game Settings
               </h2>
 
@@ -343,59 +303,18 @@ export default function CreateGamePage() {
                     ))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="text-sm text-white/50 block mb-2">
-                    Game Mode
-                  </label>
-                  <select
-                    value={settings.isPassAndPlay ? "pass" : "online"}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        isPassAndPlay: e.target.value === "pass",
-                      })
-                    }
-                    className="input-field"
-                  >
-                    <option value="online">Online</option>
-                    <option value="pass">Pass & Play</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="isPublic"
-                  checked={settings.isPublic}
-                  onChange={(e) =>
-                    setSettings({ ...settings, isPublic: e.target.checked })
-                  }
-                  className="w-5 h-5 rounded bg-imposter-dark-lighter border-white/20 text-imposter-red focus:ring-imposter-red"
-                />
-                <label htmlFor="isPublic" className="flex items-center gap-2">
-                  {settings.isPublic ? (
-                    <Globe className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <Lock className="w-4 h-4 text-white/50" />
-                  )}
-                  <span className="text-sm">
-                    {settings.isPublic ? "Public Room" : "Private Room"}
-                  </span>
-                </label>
               </div>
             </div>
 
             <button
               onClick={handleCreate}
-              disabled={loading}
+              disabled={loading || !username}
               className="btn-primary w-full py-4 text-lg disabled:opacity-50"
             >
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                <LoaderIcon size={20} className="inline mr-2" />
               ) : (
-                <Gamepad2 className="w-5 h-5 inline mr-2" />
+                <GamepadIcon size={20} className="inline mr-2" />
               )}
               Create Room
             </button>

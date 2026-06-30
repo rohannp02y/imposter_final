@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
   title: "Imposter Nepal Edition - Social Deduction Party Game",
-  description: "Nepal's ultimate party game! Pass the phone, find the imposter. 422+ Nepal words, food, festivals, and slang. Play Pass & Play or Online with friends.",
+  description: "Nepal's ultimate party game! Pass the phone, find the imposter. 422+ Nepal words, food, festivals, and slang.",
   keywords: ["imposter", "nepal", "party game", "social deduction", "among us", "pass and play", "momo", "dal bhat"],
   openGraph: {
     title: "Imposter Nepal Edition",

@@ -4,17 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Users,
-  Play,
-  Trash2,
-  Plus,
-  Settings,
-  ArrowRight,
-  ArrowLeft,
-  Gamepad2,
-  Copy,
-  Check,
-} from "lucide-react";
+  UsersIcon,
+  PlayIcon,
+  TrashIcon,
+  PlusIcon,
+  SettingsIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
+  GamepadIcon,
+  CheckIcon,
+} from "@/components/icons/SvgIcons";
 import { COLORS } from "@/types";
 import { playSound } from "@/lib/sounds";
 
@@ -138,14 +137,14 @@ export default function PassAndPlaySetupPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     step === s
-                      ? "bg-imposter-red text-white"
+                      ? "bg-accent-primary text-white"
                       : ["players", "settings", "reveal"].indexOf(step) > i
-                      ? "bg-imposter-green text-white"
-                      : "bg-imposter-dark-lighter text-white/50"
+                      ? "bg-accent-success text-white"
+                      : "bg-surface text-white/50"
                   }`}
                 >
                   {["players", "settings", "reveal"].indexOf(step) > i ? (
-                    <Check className="w-4 h-4" />
+                    <CheckIcon size={16} />
                   ) : (
                     i + 1
                   )}
@@ -154,8 +153,8 @@ export default function PassAndPlaySetupPage() {
                   <div
                     className={`w-12 h-0.5 ${
                       ["players", "settings", "reveal"].indexOf(step) > i
-                        ? "bg-imposter-green"
-                        : "bg-imposter-dark-lighter"
+                        ? "bg-accent-success"
+                        : "bg-surface"
                     }`}
                   />
                 )}
@@ -175,7 +174,7 @@ export default function PassAndPlaySetupPage() {
                 <div className="card p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
-                      <Users className="w-5 h-5 text-imposter-red" />
+                      <UsersIcon size={20} className="text-accent-primary" />
                       Players ({validPlayers.length})
                     </h2>
                     <span className="text-sm text-white/50">Min 3, Max 10</span>
@@ -218,9 +217,9 @@ export default function PassAndPlaySetupPage() {
                         {players.length > 3 && (
                           <button
                             onClick={() => removePlayer(player.id)}
-                            className="text-white/30 hover:text-red-400 transition-colors p-2"
+                            className="text-white/30 hover:text-accent-danger transition-colors p-2"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <TrashIcon size={16} />
                           </button>
                         )}
                       </motion.div>
@@ -230,9 +229,9 @@ export default function PassAndPlaySetupPage() {
                   {players.length < 10 && (
                     <button
                       onClick={addPlayer}
-                      className="mt-4 w-full py-3 border-2 border-dashed border-white/20 rounded-xl text-white/50 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
+                      className="mt-4 w-full py-3 border-2 border-dashed border-border rounded-xl text-white/50 hover:text-white hover:border-accent-primary/40 transition-colors flex items-center justify-center gap-2"
                     >
-                      <Plus className="w-4 h-4" />
+                      <PlusIcon size={16} />
                       Add Player
                     </button>
                   )}
@@ -244,7 +243,7 @@ export default function PassAndPlaySetupPage() {
                   className="btn-primary w-full py-4 text-lg disabled:opacity-50"
                 >
                   Next: Game Settings
-                  <ArrowRight className="w-5 h-5 inline ml-2" />
+                  <ArrowRightIcon size={20} className="inline ml-2" />
                 </button>
               </motion.div>
             )}
@@ -259,7 +258,7 @@ export default function PassAndPlaySetupPage() {
               >
                 <div className="card p-6">
                   <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-imposter-red" />
+                    <SettingsIcon size={20} className="text-accent-primary" />
                     Game Settings
                   </h2>
 
@@ -379,14 +378,14 @@ export default function PassAndPlaySetupPage() {
                     onClick={() => setStep(STEPS.PLAYERS)}
                     className="btn-secondary flex-1 py-4"
                   >
-                    <ArrowLeft className="w-5 h-5 inline mr-2" />
+                    <ArrowLeftIcon size={20} className="inline mr-2" />
                     Back
                   </button>
                   <button
                     onClick={handleStart}
                     className="btn-primary flex-1 py-4 text-lg"
                   >
-                    <Gamepad2 className="w-5 h-5 inline mr-2" />
+                    <GamepadIcon size={20} className="inline mr-2" />
                     Start Game
                   </button>
                 </div>
@@ -425,15 +424,15 @@ export default function PassAndPlaySetupPage() {
                         {shuffledPlayers[currentRevealIndex].name[0]?.toUpperCase()}
                       </div>
 
-                      <div className="bg-imposter-dark-lighter rounded-xl p-6 mb-6">
+                      <div className="bg-surface rounded-xl p-6 mb-6">
                         <div className="text-sm text-white/50 mb-2">
                           Your role is
                         </div>
                         <div
                           className={`text-4xl font-bold ${
                             imposterIndices.includes(currentRevealIndex)
-                              ? "text-red-500"
-                              : "text-blue-500"
+                              ? "text-accent-danger"
+                              : "text-accent-primary"
                           }`}
                         >
                           {imposterIndices.includes(currentRevealIndex)
@@ -459,7 +458,7 @@ export default function PassAndPlaySetupPage() {
                         {currentRevealIndex < shuffledPlayers.length - 1
                           ? "Pass to Next Player"
                           : "Start Game!"}
-                        <ArrowRight className="w-5 h-5 inline ml-2" />
+                        <ArrowRightIcon size={20} className="inline ml-2" />
                       </button>
 
                       <div className="mt-4 text-white/30 text-sm">
@@ -499,7 +498,7 @@ export default function PassAndPlaySetupPage() {
                       }}
                       className="btn-primary w-full py-4 text-lg"
                     >
-                      <Play className="w-5 h-5 inline mr-2" />
+                      <PlayIcon size={20} className="inline mr-2" />
                       Begin Game
                     </button>
                   </div>
@@ -511,9 +510,9 @@ export default function PassAndPlaySetupPage() {
                       key={p.id}
                       className={`w-3 h-3 rounded-full ${
                         revealedPlayers.includes(p.id)
-                          ? "bg-imposter-green"
+                          ? "bg-accent-success"
                           : i === currentRevealIndex
-                          ? "bg-imposter-yellow animate-pulse"
+                          ? "bg-accent-primary animate-pulse"
                           : "bg-white/20"
                       }`}
                     />
