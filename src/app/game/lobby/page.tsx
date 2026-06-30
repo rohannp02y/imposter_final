@@ -2,78 +2,67 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  GlobeIcon,
-  GamepadIcon,
-  UsersIcon,
-  ArrowRightIcon,
-} from "@/components/icons/SvgIcons";
-import { IconCard } from "@/components/icons/IconCard";
+import { GamepadIcon, GlobeIcon, ArrowRightIcon } from "@/components/icons/SvgIcons";
 
 export default function LobbyPage() {
   return (
-    <div className="min-h-screen pt-20 pb-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen pt-20 pb-8 px-6 md:px-12 lg:px-24 relative">
+      <div className="absolute inset-0 gradient-mesh opacity-20" />
+      <div className="max-w-[1400px] mx-auto relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-3xl font-bold text-center mb-2">
-            <span className="text-gradient">Play Online</span>
+          <span className="text-ink-muted text-xs font-mono uppercase tracking-[0.3em] block mb-4">
+            Online
+          </span>
+          <h1 className="text-display text-[clamp(2.5rem,5vw,4rem)] leading-[0.9] text-ink-primary mb-4">
+            Connect
           </h1>
-          <p className="text-white/50 text-center mb-8">
-            Connect with friends and play together
+          <p className="text-ink-secondary text-lg font-light mb-16 max-w-md">
+            Play with friends across the network.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
             >
-              <Link href="/game/create" className="block">
-                <div className="card p-6 hover:border-accent-primary/30 transition-all cursor-pointer group h-full">
-                  <IconCard
-                    icon={<GamepadIcon size={28} />}
-                    gradient="blue"
-                    size="lg"
-                    className="mb-4"
-                  />
-                  <h3 className="text-xl font-bold mb-2">Create Room</h3>
-                  <p className="text-white/50 text-sm mb-4">
-                    Set up a new game with custom rules and invite your friends
+              <Link href="/game/create" className="block group">
+                <div className="card-surface p-8 h-full hover:border-crimson/20 transition-colors duration-500">
+                  <div className="w-12 h-12 rounded-xl bg-crimson/10 flex items-center justify-center mb-6 group-hover:bg-crimson/20 transition-colors">
+                    <GamepadIcon size={20} className="text-crimson" />
+                  </div>
+                  <h3 className="text-editorial text-xl text-ink-primary mb-2">Create Room</h3>
+                  <p className="text-ink-secondary text-sm mb-6">
+                    Set up a game and invite others to join.
                   </p>
-                  <div className="flex items-center gap-2 text-accent-primary text-sm font-medium">
-                    <span>Create Game</span>
-                    <ArrowRightIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center gap-2 text-crimson text-xs font-mono uppercase tracking-wider">
+                    <span>Initialize</span>
+                    <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </Link>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
             >
-              <div className="card p-6 h-full">
-                <IconCard
-                  icon={<UsersIcon size={28} />}
-                  gradient="purple"
-                  size="lg"
-                  className="mb-4"
-                />
-                <h3 className="text-xl font-bold mb-2">Quick Play</h3>
-                <p className="text-white/50 text-sm mb-4">
-                  Find a match automatically and jump into the action
+              <div className="card-surface p-8 h-full">
+                <div className="w-12 h-12 rounded-xl bg-ink-ghost/30 flex items-center justify-center mb-6">
+                  <GlobeIcon size={20} className="text-ink-muted" />
+                </div>
+                <h3 className="text-editorial text-xl text-ink-primary mb-2">Quick Match</h3>
+                <p className="text-ink-secondary text-sm mb-6">
+                  Find opponents automatically.
                 </p>
-                <div className="bg-surface-hover rounded-xl p-4 text-center">
-                  <GlobeIcon size={32} className="text-white/30 mx-auto mb-2" />
-                  <p className="text-white/40 text-sm">
-                    Online multiplayer coming soon!
-                  </p>
-                  <p className="text-white/30 text-xs mt-1">
-                    For now, try Pass & Play mode
+                <div className="bg-canvas rounded-lg p-4 border border-hairline">
+                  <p className="text-ink-muted text-xs font-mono text-center">
+                    Coming soon
                   </p>
                 </div>
               </div>
@@ -81,16 +70,16 @@ export default function LobbyPage() {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mt-12"
           >
             <Link
               href="/game/pass-and-play/setup"
-              className="text-white/50 hover:text-white transition-colors text-sm"
+              className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors"
             >
-              Want to play locally? Try <span className="text-accent-primary font-medium">Pass & Play</span> mode
+              Or play locally →
             </Link>
           </motion.div>
         </motion.div>

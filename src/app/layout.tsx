@@ -4,12 +4,11 @@ import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
-  title: "Imposter Nepal Edition - Social Deduction Party Game",
-  description: "Nepal's ultimate party game! Pass the phone, find the imposter. 422+ Nepal words, food, festivals, and slang.",
-  keywords: ["imposter", "nepal", "party game", "social deduction", "among us", "pass and play", "momo", "dal bhat"],
+  title: "IMPOSTER — Nepal Edition",
+  description: "Someone among you is not who they seem. A social deduction game with 422+ Nepali words.",
   openGraph: {
-    title: "Imposter Nepal Edition",
-    description: "Pass the phone, find the imposter! Nepal's social deduction party game.",
+    title: "IMPOSTER — Nepal Edition",
+    description: "Find the imposter before it's too late.",
     type: "website",
   },
 };
@@ -21,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-imposter-dark">
+      <body className="min-h-screen bg-canvas">
         <Providers>
           <Navbar />
           <main>{children}</main>

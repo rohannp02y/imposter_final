@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,226 +16,107 @@
   }
 
   body {
-    @apply bg-imposter-dark text-white antialiased;
-    font-family: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Roboto, sans-serif;
+    @apply bg-canvas text-ink-primary antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #dc2626;
+    color: white;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-accent-primary hover:bg-accent-primary-hover text-white font-medium py-3 px-6 rounded-xl transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg;
-  }
-
-  .btn-secondary {
-    @apply bg-surface hover:bg-surface-hover text-white font-medium py-3 px-6 rounded-xl transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.98] border border-border;
+    @apply bg-crimson hover:bg-crimson-deep text-white font-medium py-3 px-6 rounded-lg transition-all duration-200;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-white/10 text-white font-medium py-2 px-4 rounded-lg transition-all duration-150;
+    @apply bg-transparent hover:bg-white/5 text-ink-secondary hover:text-ink-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-hairline hover:border-ink-ghost;
   }
 
-  .btn-danger {
-    @apply bg-accent-danger hover:bg-red-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-150;
+  .card-glass {
+    @apply bg-surface-glass backdrop-blur-sm border border-hairline rounded-xl;
   }
 
-  .card {
-    @apply bg-surface rounded-2xl border border-border shadow-lg;
+  .card-surface {
+    @apply bg-surface border border-hairline rounded-xl;
   }
 
   .input-field {
-    @apply w-full bg-imposter-dark border border-border rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all;
+    @apply w-full bg-canvas border border-hairline rounded-lg px-4 py-3 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-crimson/50 transition-all;
   }
 
-  .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  .text-display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-extralight tracking-ultra-tight;
   }
 
-  .badge-accent {
-    @apply badge bg-accent-primary/20 text-accent-primary border border-accent-primary/30;
-  }
-
-  .badge-success {
-    @apply badge bg-accent-success/20 text-accent-success border border-accent-success/30;
-  }
-
-  .badge-danger {
-    @apply badge bg-accent-danger/20 text-accent-danger border border-accent-danger/30;
-  }
-
-  .avatar {
-    @apply w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-white font-bold text-lg;
-  }
-
-  .avatar-sm {
-    @apply w-8 h-8 rounded-full border border-border flex items-center justify-center text-white font-bold text-sm;
-  }
-
-  .avatar-lg {
-    @apply w-16 h-16 rounded-full border-2 border-border flex items-center justify-center text-white font-bold text-2xl;
-  }
-
-  .game-container {
-    @apply w-full h-screen overflow-hidden relative;
-  }
-
-  .game-hud {
-    @apply absolute top-4 left-4 right-4 flex justify-between items-start z-10;
-  }
-
-  .game-panel {
-    @apply bg-black/60 backdrop-blur-sm rounded-xl border border-border p-3;
-  }
-
-  .icon-card {
-    @apply w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg;
-  }
-
-  .icon-card-sm {
-    @apply w-10 h-10 rounded-xl flex items-center justify-center shadow-md;
-  }
-
-  .icon-card-lg {
-    @apply w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl;
+  .text-editorial {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-light tracking-tight;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-primary to-purple-500;
+  .gradient-mesh {
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(220,38,38,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139,92,246,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 60% at 50% 80%, rgba(220,38,38,0.08) 0%, transparent 50%);
   }
 
-  .text-gradient-warm {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-danger to-orange-500;
+  .gradient-atmosphere {
+    background: 
+      radial-gradient(ellipse 120% 80% at 50% 0%, rgba(220,38,38,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 80% 50%, rgba(139,92,246,0.08) 0%, transparent 50%);
   }
 
-  .glass {
-    @apply bg-white/5 backdrop-blur-md border border-border;
+  .glass-border {
+    border: 1px solid rgba(255,255,255,0.06);
   }
 
-  .glow-accent {
-    box-shadow: 0 0 20px rgba(113, 112, 255, 0.4);
+  .text-gradient-crimson {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-crimson to-crimson-glow;
   }
 
-  .glow-success {
-    box-shadow: 0 0 20px rgba(0, 186, 124, 0.4);
+  .noise-overlay {
+    position: relative;
   }
 
-  .glow-danger {
-    box-shadow: 0 0 20px rgba(235, 87, 87, 0.4);
-  }
-
-  .gradient-green {
-    @apply bg-gradient-to-br from-green-500 to-green-600;
-  }
-
-  .gradient-teal {
-    @apply bg-gradient-to-br from-teal-500 to-teal-600;
-  }
-
-  .gradient-cyan {
-    @apply bg-gradient-to-br from-cyan-500 to-cyan-600;
-  }
-
-  .gradient-blue {
-    @apply bg-gradient-to-br from-blue-500 to-blue-600;
-  }
-
-  .gradient-purple {
-    @apply bg-gradient-to-br from-purple-500 to-purple-600;
-  }
-
-  .gradient-magenta {
-    @apply bg-gradient-to-br from-pink-500 to-pink-600;
-  }
-
-  .gradient-red {
-    @apply bg-gradient-to-br from-red-500 to-red-600;
-  }
-
-  .gradient-orange {
-    @apply bg-gradient-to-br from-orange-500 to-orange-600;
-  }
-
-  .gradient-yellow {
-    @apply bg-gradient-to-br from-yellow-500 to-yellow-600;
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Animations */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.8);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.animate-pulse-ring {
-  animation: pulse-ring 1s ease-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }

@@ -1,226 +1,169 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { initAudio } from "@/lib/sounds";
 import {
   GamepadIcon,
   GlobeIcon,
-  UsersIcon,
   ShieldIcon,
   TagsIcon,
-  SettingsIcon,
-  MessageIcon,
-  BarChartIcon,
-  SmartphoneIcon,
   ChevronRightIcon,
-  SparklesIcon,
   NepalFlagIcon,
 } from "@/components/icons/SvgIcons";
-import { IconCard } from "@/components/icons/IconCard";
 
-const features = [
-  {
-    icon: <GlobeIcon size={28} />,
-    title: "Nepal & Global Packs",
-    description: "422+ Nepal words across 9 categories — celebrities, food, places, festivals, slang",
-    gradient: "green" as const,
-  },
-  {
-    icon: <UsersIcon size={28} />,
-    title: "Pass & Play",
-    description: "Local multiplayer on one device. Pass the phone, reveal roles, find the imposter!",
-    gradient: "teal" as const,
-  },
-  {
-    icon: <ZapIcon size={28} />,
-    title: "Real-time Games",
-    description: "Play online with friends via room codes or quick play matchmaking",
-    gradient: "cyan" as const,
-  },
-  {
-    icon: <ShieldIcon size={28} />,
-    title: "Social Deduction",
-    description: "Give clues, discuss, and vote to find the hidden imposter among your crew",
-    gradient: "blue" as const,
-  },
-  {
-    icon: <TagsIcon size={28} />,
-    title: "Custom Categories",
-    description: "Create your own word categories with custom hints and emojis",
-    gradient: "purple" as const,
-  },
-  {
-    icon: <SettingsIcon size={28} />,
-    title: "Admin Panel",
-    description: "Manage categories, players, and game settings from the admin dashboard",
-    gradient: "magenta" as const,
-  },
-  {
-    icon: <MessageIcon size={28} />,
-    title: "Live Chat & Timer",
-    description: "Discussion timer with countdown, voting system, and results reveal",
-    gradient: "red" as const,
-  },
-  {
-    icon: <BarChartIcon size={28} />,
-    title: "Stats & Leaderboards",
-    description: "Track wins, ELO rating, crew vs imposter performance",
-    gradient: "orange" as const,
-  },
-  {
-    icon: <SmartphoneIcon size={28} />,
-    title: "Mobile Ready",
-    description: "Convert to a native mobile app with React Native",
-    gradient: "yellow" as const,
-  },
+const WORDS = [
+  "MOMO", "DAL BHAT", "SEL ROTI", "NAMASTE", "BHAI",
+  "CHHORA", "DIDI", "AAMAA", "BAU", "DHAKA TOPI",
 ];
-
-const nepalWords = [
-  "Momo", "Dal Bhat", "Sel Roti", "Dhaka Topi", "Namaste",
-  "Bhai", "Chhora", "Didi", "Aamaa", "Bau",
-];
-
-function ZapIcon({ className = "", size = 24 }: { className?: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
 
 export default function HomePage() {
+  const [mounted, setMounted] = useState(false);
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 400], [1, 0.95]);
+
   useEffect(() => {
+    setMounted(true);
     const handleInteraction = () => {
       initAudio();
       window.removeEventListener("click", handleInteraction);
-      window.removeEventListener("touchstart", handleInteraction);
     };
     window.addEventListener("click", handleInteraction);
-    window.addEventListener("touchstart", handleInteraction);
-    return () => {
-      window.removeEventListener("click", handleInteraction);
-      window.removeEventListener("touchstart", handleInteraction);
-    };
+    return () => window.removeEventListener("click", handleInteraction);
   }, []);
 
   return (
-    <div className="min-h-screen">
-      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-accent-primary/10 via-transparent to-transparent" />
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent-primary/10 rounded-full blur-3xl" />
-        <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-60 right-1/4 w-[200px] h-[200px] bg-blue-500/10 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-canvas relative">
+      {/* Living gradient mesh background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-screen gradient-mesh animate-breathe" />
+        <div className="absolute top-1/4 -right-1/4 w-[800px] h-[800px] rounded-full bg-crimson/5 blur-[120px] animate-drift" />
+        <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] rounded-full bg-purple-900/10 blur-[100px] animate-drift" style={{ animationDelay: "-7s" }} />
+      </div>
 
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-3 bg-accent-primary/20 border border-accent-primary/30 rounded-full px-5 py-2.5 mb-8">
-              <NepalFlagIcon size={20} className="text-accent-primary" />
-              <span className="text-sm text-accent-primary font-medium">
-                Nepal Edition — Pass the phone, find the imposter!
-              </span>
-              <SparklesIcon size={16} className="text-accent-primary" />
-            </div>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-6xl sm:text-8xl font-extrabold mb-6 tracking-tight"
-          >
-            <span className="text-gradient">IMPOSTER</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl sm:text-2xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed"
-          >
-            Pass the phone, find the imposter — <span className="text-accent-primary font-semibold">kasto suspense!</span>{" "}
-            A social deduction party game with Nepal&apos;s best words, food, festivals, and slang.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
-          >
-            <Link
-              href="/game/pass-and-play/setup"
-              className="btn-primary text-lg px-10 py-5 inline-flex items-center justify-center gap-3 group"
+      {/* HERO — asymmetric, editorial */}
+      <motion.section
+        style={{ opacity: heroOpacity, scale: heroScale }}
+        className="relative min-h-screen flex items-center px-6 md:px-12 lg:px-24"
+      >
+        <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left: Main title block */}
+          <div className="lg:col-span-7 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              animate={mounted ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-              <GamepadIcon size={24} />
-              Play Pass & Play
-              <ChevronRightIcon size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/game/lobby"
-              className="btn-secondary text-lg px-10 py-5 inline-flex items-center justify-center gap-3 group"
-            >
-              <GlobeIcon size={24} />
-              Play Online
-              <ChevronRightIcon size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </motion.div>
+              <div className="flex items-center gap-3 mb-8">
+                <NepalFlagIcon size={18} className="text-crimson" />
+                <span className="text-ink-muted text-xs font-mono uppercase tracking-[0.2em]">
+                  Nepal Edition
+                </span>
+              </div>
 
+              <h1 className="text-display text-[clamp(4rem,12vw,10rem)] leading-[0.85] mb-8">
+                <span className="block text-ink-primary">IMP</span>
+                <span className="block text-gradient-crimson">OSTER</span>
+              </h1>
+
+              <p className="text-ink-secondary text-lg md:text-xl max-w-md leading-relaxed mb-12 font-light">
+                Someone among you is not who they seem.
+                <br />
+                <span className="text-ink-muted">Find them before it&apos;s too late.</span>
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/game/pass-and-play/setup"
+                  className="btn-primary group flex items-center justify-center gap-3 text-base"
+                >
+                  <GamepadIcon size={18} />
+                  <span>Begin Session</span>
+                  <ChevronRightIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/game/lobby"
+                  className="btn-ghost flex items-center justify-center gap-3 text-base"
+                >
+                  <GlobeIcon size={18} />
+                  <span>Connect Online</span>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right: Floating mystery card */}
+          <div className="lg:col-span-5 relative z-10 hidden lg:block">
+            <motion.div
+              initial={{ opacity: 0, y: 40, rotate: 2 }}
+              animate={mounted ? { opacity: 1, y: 0, rotate: 1 } : {}}
+              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="relative"
+            >
+              <div className="card-glass p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/10 blur-[60px] rounded-full" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-6">
+                    <ShieldIcon size={14} className="text-crimson" />
+                    <span className="text-ink-muted text-xs font-mono uppercase tracking-widest">Classified</span>
+                  </div>
+                  <div className="space-y-4">
+                    {["CREW", "CREW", "IMPOSTER", "CREW", "CREW"].map((role, i) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b border-hairline/50">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${role === "IMPOSTER" ? "bg-crimson animate-glow-pulse" : "bg-ink-ghost"}`} />
+                          <span className="text-ink-secondary text-sm font-mono">Player {i + 1}</span>
+                        </div>
+                        <span className={`text-xs font-mono uppercase tracking-wider ${role === "IMPOSTER" ? "text-crimson" : "text-ink-muted"}`}>
+                          {role === "IMPOSTER" ? "???" : "Hidden"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-hairline/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-muted text-xs font-mono">Status</span>
+                      <span className="text-crimson text-xs font-mono uppercase tracking-wider animate-pulse">Active</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={mounted ? { opacity: 1 } : {}}
+          transition={{ delay: 1.5, duration: 0.8 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2"
+        >
+          <div className="w-[1px] h-16 bg-gradient-to-b from-crimson/50 to-transparent" />
+        </motion.div>
+      </motion.section>
+
+      {/* WORD SCROLL — floating Nepali words */}
+      <section className="relative py-32 overflow-hidden">
+        <div className="absolute inset-0 gradient-atmosphere" />
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 lg:px-24">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-6 text-white/40 text-sm"
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1 }}
+            className="flex flex-wrap justify-center gap-x-12 gap-y-6"
           >
-            <div className="flex items-center gap-2">
-              <NepalFlagIcon size={16} className="text-accent-primary" />
-              <span>422+ Nepal words</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-white/20 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <TagsIcon size={16} className="text-accent-primary" />
-              <span>13 categories</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-white/20 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <UsersIcon size={16} className="text-accent-primary" />
-              <span>3-10 players</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-white/20 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <GlobeIcon size={16} className="text-accent-primary" />
-              <span>3 maps</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="mt-12 flex flex-wrap justify-center gap-2"
-          >
-            {nepalWords.map((word, i) => (
+            {WORDS.map((word, i) => (
               <motion.span
                 key={word}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.8 + i * 0.05 }}
-                className="px-3 py-1 rounded-full bg-white/5 border border-border text-white/40 text-xs hover:bg-white/10 hover:text-white/60 transition-colors cursor-default"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
+                className="text-display text-[clamp(2rem,5vw,4rem)] font-extralight text-ink-ghost/40 hover:text-crimson/60 transition-colors duration-700 cursor-default select-none"
               >
                 {word}
               </motion.span>
@@ -229,102 +172,131 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.h2
+      {/* FEATURES — broken grid, asymmetric */}
+      <section className="relative py-32 px-6 md:px-12 lg:px-24">
+        <div className="max-w-[1400px] mx-auto">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-4"
+            className="mb-20"
           >
-            Everything You Need
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-white/50 text-center mb-12 max-w-xl mx-auto"
-          >
-            Nepal&apos;s ultimate party game with all the features you love
-          </motion.p>
+            <span className="text-ink-muted text-xs font-mono uppercase tracking-[0.3em] block mb-4">
+              Capabilities
+            </span>
+            <h2 className="text-display text-[clamp(2.5rem,6vw,5rem)] leading-[0.9] text-ink-primary">
+              How it works
+            </h2>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((feature, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {[
+              {
+                icon: <GamepadIcon size={20} />,
+                title: "Gather",
+                desc: "3-10 players. One device. Pass it around.",
+                span: "md:col-span-5",
+                delay: 0,
+              },
+              {
+                icon: <ShieldIcon size={20} />,
+                title: "Deceive",
+                desc: "One player receives a secret role. The imposter. Their identity is known only to them.",
+                span: "md:col-span-7",
+                delay: 0.1,
+              },
+              {
+                icon: <TagsIcon size={20} />,
+                title: "Discover",
+                desc: "Give clues. Ask questions. Vote. Find the imposter before they eliminate the crew.",
+                span: "md:col-span-7",
+                delay: 0.2,
+              },
+              {
+                icon: <GlobeIcon size={20} />,
+                title: "Repeat",
+                desc: "422+ Nepali words across 9 categories. Momo. Dal Bhat. Namaste. Every game is different.",
+                span: "md:col-span-5",
+                delay: 0.3,
+              },
+            ].map((feature, i) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="card p-6 hover:border-accent-primary/30 transition-all group"
+                transition={{ delay: feature.delay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className={`${feature.span}`}
               >
-                <IconCard
-                  icon={feature.icon}
-                  gradient={feature.gradient}
-                  size="md"
-                  className="mb-4"
-                />
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">
-                  {feature.description}
-                </p>
+                <div className="card-surface p-8 h-full group hover:border-crimson/20 transition-colors duration-500">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-crimson/10 flex items-center justify-center text-crimson group-hover:bg-crimson/20 transition-colors">
+                      {feature.icon}
+                    </div>
+                    <span className="text-ink-muted text-xs font-mono uppercase tracking-widest">
+                      0{ i + 1 }
+                    </span>
+                  </div>
+                  <h3 className="text-editorial text-2xl text-ink-primary mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-ink-secondary text-sm leading-relaxed">
+                    {feature.desc}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="card p-8 sm:p-12 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 via-transparent to-purple-500/10" />
-            <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Ready to Play?
-              </h2>
-              <p className="text-white/50 mb-8 max-w-lg mx-auto text-lg">
-                Gather 3-10 friends, pass the phone, and find the imposter.
-                No peeking, bhai!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/game/pass-and-play/setup"
-                  className="btn-primary text-lg px-8 py-4"
-                >
-                  Start Pass & Play
-                </Link>
-                <Link href="/admin" className="btn-secondary text-lg px-8 py-4">
-                  Admin Panel
-                </Link>
-              </div>
-            </div>
-          </div>
+      {/* CTA — mysterious, minimal */}
+      <section className="relative py-40 px-6 md:px-12 lg:px-24">
+        <div className="absolute inset-0 gradient-atmosphere opacity-50" />
+        <div className="max-w-[1400px] mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center"
+          >
+            <h2 className="text-display text-[clamp(3rem,8vw,7rem)] leading-[0.85] mb-8">
+              <span className="block text-ink-primary">Ready to</span>
+              <span className="block text-gradient-crimson">play?</span>
+            </h2>
+            <p className="text-ink-secondary text-lg max-w-md mx-auto mb-12 font-light">
+              The game begins the moment you hand over the phone.
+            </p>
+            <Link
+              href="/game/pass-and-play/setup"
+              className="btn-primary inline-flex items-center gap-3 text-lg px-10 py-4"
+            >
+              <GamepadIcon size={20} />
+              Start Now
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      <footer className="py-8 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-white/30 text-sm">
-          <div className="flex items-center gap-2">
-            <NepalFlagIcon size={16} className="text-accent-primary" />
-            <span>Imposter Nepal Edition</span>
+      {/* Footer — minimal */}
+      <footer className="relative py-12 px-6 md:px-12 lg:px-24 border-t border-hairline">
+        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <NepalFlagIcon size={14} className="text-crimson" />
+            <span className="text-ink-muted text-xs font-mono uppercase tracking-widest">
+              Imposter Nepal
+            </span>
           </div>
-          <div className="flex gap-4">
-            <Link href="/admin" className="hover:text-white transition-colors">
+          <div className="flex gap-8">
+            <Link href="/admin" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
               Admin
             </Link>
-            <Link
-              href="/leaderboard"
-              className="hover:text-white transition-colors"
-            >
-              Leaderboard
+            <Link href="/leaderboard" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
+              Rankings
             </Link>
-            <Link
-              href="/custom"
-              className="hover:text-white transition-colors"
-            >
-              Custom Categories
+            <Link href="/custom" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
+              Custom
             </Link>
           </div>
         </div>

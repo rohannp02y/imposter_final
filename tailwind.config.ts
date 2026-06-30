@@ -5,69 +5,80 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        imposter: {
-          red: "#EF4444",
-          "red-dark": "#DC2626",
-          blue: "#3B82F6",
-          "blue-dark": "#2563EB",
-          green: "#22C55E",
-          purple: "#A855F7",
-          yellow: "#EAB308",
-          dark: "#080808",
-          "dark-light": "#191d20",
-          "dark-lighter": "#334155",
-        },
-        accent: {
-          primary: "#7170ff",
-          "primary-hover": "#818fff",
-          success: "#00ba7c",
-          danger: "#eb5757",
-        },
+        canvas: "#090909",
         surface: {
-          DEFAULT: "#191d20",
-          hover: "#1e2732",
+          DEFAULT: "#111111",
+          elevated: "#1a1a1a",
+          glass: "rgba(255,255,255,0.03)",
         },
-        border: {
-          DEFAULT: "#585a5c",
-          light: "#383b3f",
+        crimson: {
+          DEFAULT: "#dc2626",
+          deep: "#991b1b",
+          glow: "#ef4444",
         },
-      },
-      animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "bounce-subtle": "bounce 2s infinite",
-        float: "float 3s ease-in-out infinite",
-        glow: "glow 2s ease-in-out infinite alternate",
-        "spin-slow": "spin 3s linear infinite",
-      },
-      keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-10px)" },
+        ink: {
+          primary: "#fafafa",
+          secondary: "#a1a1aa",
+          muted: "#52525b",
+          ghost: "#27272a",
         },
-        glow: {
-          "0%": { boxShadow: "0 0 5px rgba(113, 112, 255, 0.5)" },
-          "100%": { boxShadow: "0 0 20px rgba(113, 112, 255, 0.8)" },
-        },
+        hairline: "#18181b",
       },
       fontFamily: {
-        sans: [
-          "Inter Variable",
+        display: [
+          "Plus Jakarta Sans",
+          "Inter",
+          "-apple-system",
+          "sans-serif",
+        ],
+        body: [
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
           "sans-serif",
         ],
-        mono: ["Berkeley Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
-      spacing: {
-        18: "4.5rem",
-        88: "22rem",
-        128: "32rem",
+      letterSpacing: {
+        "ultra-tight": "-0.06em",
+        "mega-tight": "-0.08em",
+        "poster": "-0.04em",
       },
-      borderRadius: {
-        "4xl": "2rem",
+      animation: {
+        "breathe": "breathe 8s ease-in-out infinite",
+        "drift": "drift 20s linear infinite",
+        "emerge": "emerge 0.8s cubic-bezier(0.16,1,0.3,1) forwards",
+        "fade-up": "fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards",
+        "slide-in": "slideIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards",
+        "glow-pulse": "glowPulse 4s ease-in-out infinite",
+      },
+      keyframes: {
+        breathe: {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "0.7", transform: "scale(1.05)" },
+        },
+        drift: {
+          "0%": { transform: "translate(0, 0) rotate(0deg)" },
+          "33%": { transform: "translate(30px, -30px) rotate(120deg)" },
+          "66%": { transform: "translate(-20px, 20px) rotate(240deg)" },
+          "100%": { transform: "translate(0, 0) rotate(360deg)" },
+        },
+        emerge: {
+          "0%": { opacity: "0", transform: "translateY(40px) scale(0.95)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        fadeUp: {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        slideIn: {
+          "0%": { opacity: "0", transform: "translateX(-20px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        glowPulse: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(220,38,38,0.3)" },
+          "50%": { boxShadow: "0 0 40px rgba(220,38,38,0.6)" },
+        },
       },
     },
   },

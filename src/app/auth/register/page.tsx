@@ -28,7 +28,7 @@ export default function RegisterPage() {
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Minimum 6 characters");
       return;
     }
 
@@ -42,52 +42,49 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Failed");
         return;
       }
 
-      localStorage.setItem(
-        "imposter_user",
-        JSON.stringify({ id: data.user.id, username: data.user.username })
-      );
-
+      localStorage.setItem("imposter_user", JSON.stringify({ id: data.user.id, username: data.user.username }));
       playSound("player_join");
       router.push("/game/lobby");
       router.refresh();
     } catch {
-      setError("Something went wrong");
+      setError("Connection failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-16">
+    <div className="min-h-screen flex items-center justify-center px-6 relative">
+      <div className="absolute inset-0 gradient-mesh opacity-30" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm relative z-10"
       >
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-primary to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <GamepadIcon size={32} className="text-white" />
+        <div className="text-center mb-10">
+          <div className="w-12 h-12 bg-crimson/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+            <GamepadIcon size={20} className="text-crimson" />
           </div>
-          <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="text-white/50 mt-2">Join the imposter hunt</p>
+          <h1 className="text-display text-3xl text-ink-primary mb-2">Join the game</h1>
+          <p className="text-ink-muted text-sm font-mono">Create your identity</p>
         </div>
 
-        <div className="card p-6 sm:p-8">
+        <div className="card-surface p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-accent-danger/20 border border-accent-danger/30 text-accent-danger px-4 py-3 rounded-xl text-sm">
+              <div className="bg-crimson/10 border border-crimson/20 text-crimson px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
                 Username
               </label>
               <input
@@ -95,7 +92,7 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input-field"
-                placeholder="CoolPlayer420"
+                placeholder="Choose a name"
                 required
                 minLength={2}
                 maxLength={20}
@@ -103,7 +100,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
                 Email
               </label>
               <input
@@ -117,7 +114,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
                 Password
               </label>
               <div className="relative">
@@ -125,7 +122,7 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-12"
+                  className="input-field pr-10"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -133,20 +130,16 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-primary transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOffIcon size={20} />
-                  ) : (
-                    <EyeIcon size={20} />
-                  )}
+                  {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
-                Confirm Password
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
+                Confirm
               </label>
               <input
                 type="password"
@@ -161,22 +154,17 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <LoaderIcon size={20} className="inline mr-2" />
-              ) : null}
-              {loading ? "Creating account..." : "Create Account"}
+              {loading && <LoaderIcon size={16} />}
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-white/50 text-sm">
-              Already have an account?{" "}
-              <Link
-                href="/auth/login"
-                className="text-accent-primary hover:text-accent-primary-hover"
-              >
+            <p className="text-ink-muted text-xs font-mono">
+              Already have one?{" "}
+              <Link href="/auth/login" className="text-crimson hover:text-crimson-glow transition-colors">
                 Sign in
               </Link>
             </p>

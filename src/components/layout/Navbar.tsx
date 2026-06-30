@@ -2,75 +2,64 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  GamepadIcon,
-  TrophyIcon,
-  MenuIcon,
-  XIcon,
-  LogOutIcon,
-} from "@/components/icons/SvgIcons";
-import { playSound } from "@/lib/sounds";
+import { GamepadIcon, TrophyIcon, MenuIcon, XIcon } from "@/components/icons/SvgIcons";
 
 export function Navbar() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-md border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-canvas/80 backdrop-blur-md border-b border-hairline">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-24">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent-primary to-purple-500 rounded-xl flex items-center justify-center">
-              <GamepadIcon size={20} className="text-white" />
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-lg bg-crimson/10 flex items-center justify-center group-hover:bg-crimson/20 transition-colors">
+              <GamepadIcon size={16} className="text-crimson" />
             </div>
-            <span className="text-xl font-bold text-gradient hidden sm:block">
+            <span className="text-display text-sm font-medium tracking-ultra-tight text-ink-primary hidden sm:block">
               IMPOSTER
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-8">
             <Link
               href="/game/lobby"
-              className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
+              className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-2"
             >
-              <GamepadIcon size={16} />
+              <GamepadIcon size={12} />
               Play
             </Link>
             <Link
               href="/leaderboard"
-              className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
+              className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-2"
             >
-              <TrophyIcon size={16} />
-              Leaderboard
+              <TrophyIcon size={12} />
+              Rankings
             </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
             {status === "loading" ? (
-              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-surface animate-pulse" />
             ) : session ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-purple-500 flex items-center justify-center text-sm font-bold">
-                    {(session.user as { username?: string })?.username?.[0]?.toUpperCase() || "U"}
-                  </div>
-                  <span className="text-sm">
-                    {(session.user as { username?: string })?.username || "User"}
-                  </span>
-                </Link>
-              </div>
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 text-ink-secondary hover:text-ink-primary transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-crimson/20 flex items-center justify-center text-xs font-medium text-crimson">
+                  {(session.user as { username?: string })?.username?.[0]?.toUpperCase() || "U"}
+                </div>
+                <span className="text-xs font-mono">
+                  {(session.user as { username?: string })?.username || "User"}
+                </span>
+              </Link>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/auth/login" className="btn-ghost text-sm">
+              <div className="flex items-center gap-3">
+                <Link href="/auth/login" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
                   Sign In
                 </Link>
-                <Link href="/auth/register" className="btn-primary text-sm py-2 px-4">
+                <Link href="/auth/register" className="btn-primary text-xs py-2 px-4">
                   Sign Up
                 </Link>
               </div>
@@ -78,66 +67,52 @@ export function Navbar() {
           </div>
 
           <button
-            className="md:hidden text-white/70 hover:text-white"
-            onClick={() => {
-              playSound("button_click");
-              setMobileMenuOpen(!mobileMenuOpen);
-            }}
+            className="md:hidden text-ink-muted hover:text-ink-primary transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
+            {mobileOpen ? <XIcon size={20} /> : <MenuIcon size={20} />}
           </button>
         </div>
       </div>
 
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-surface border-t border-border animate-slide-up">
-          <div className="px-4 py-3 space-y-2">
+      {mobileOpen && (
+        <div className="md:hidden bg-surface border-t border-hairline">
+          <div className="px-6 py-4 space-y-3">
             <Link
               href="/game/lobby"
-              className="block py-2 text-white/70 hover:text-white"
-              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
+              onClick={() => setMobileOpen(false)}
             >
               Play
             </Link>
             <Link
               href="/leaderboard"
-              className="block py-2 text-white/70 hover:text-white"
-              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
+              onClick={() => setMobileOpen(false)}
             >
-              Leaderboard
+              Rankings
             </Link>
             {session ? (
-              <>
-                <Link
-                  href="/profile"
-                  className="block py-2 text-white/70 hover:text-white"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Profile
-                </Link>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    router.push("/");
-                  }}
-                  className="block py-2 text-white/70 hover:text-white w-full text-left"
-                >
-                  Sign Out
-                </button>
-              </>
+              <Link
+                href="/profile"
+                className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
+                onClick={() => setMobileOpen(false)}
+              >
+                Profile
+              </Link>
             ) : (
               <>
                 <Link
                   href="/auth/login"
-                  className="block py-2 text-white/70 hover:text-white"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
+                  onClick={() => setMobileOpen(false)}
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="block py-2 text-accent-primary hover:text-accent-primary-hover"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-crimson text-sm font-mono uppercase tracking-wider"
+                  onClick={() => setMobileOpen(false)}
                 >
                   Sign Up
                 </Link>

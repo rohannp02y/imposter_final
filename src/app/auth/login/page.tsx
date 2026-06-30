@@ -23,51 +23,48 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
+      const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Invalid credentials");
       } else {
         playSound("player_join");
         router.push("/game/lobby");
         router.refresh();
       }
     } catch {
-      setError("Something went wrong");
+      setError("Connection failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-16">
+    <div className="min-h-screen flex items-center justify-center px-6 relative">
+      <div className="absolute inset-0 gradient-mesh opacity-30" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm relative z-10"
       >
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-primary to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <GamepadIcon size={32} className="text-white" />
+        <div className="text-center mb-10">
+          <div className="w-12 h-12 bg-crimson/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+            <GamepadIcon size={20} className="text-crimson" />
           </div>
-          <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-white/50 mt-2">Sign in to continue playing</p>
+          <h1 className="text-display text-3xl text-ink-primary mb-2">Welcome back</h1>
+          <p className="text-ink-muted text-sm font-mono">Enter the game</p>
         </div>
 
-        <div className="card p-6 sm:p-8">
+        <div className="card-surface p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-accent-danger/20 border border-accent-danger/30 text-accent-danger px-4 py-3 rounded-xl text-sm">
+              <div className="bg-crimson/10 border border-crimson/20 text-crimson px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
                 Email
               </label>
               <input
@@ -81,7 +78,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
+              <label className="block text-ink-muted text-xs font-mono uppercase tracking-wider mb-2">
                 Password
               </label>
               <div className="relative">
@@ -89,20 +86,16 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-12"
+                  className="input-field pr-10"
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-primary transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOffIcon size={20} />
-                  ) : (
-                    <EyeIcon size={20} />
-                  )}
+                  {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                 </button>
               </div>
             </div>
@@ -110,23 +103,18 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <LoaderIcon size={20} className="inline mr-2" />
-              ) : null}
-              {loading ? "Signing in..." : "Sign In"}
+              {loading && <LoaderIcon size={16} />}
+              {loading ? "Entering..." : "Sign In"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-white/50 text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/register"
-                className="text-accent-primary hover:text-accent-primary-hover"
-              >
-                Sign up
+            <p className="text-ink-muted text-xs font-mono">
+              No account?{" "}
+              <Link href="/auth/register" className="text-crimson hover:text-crimson-glow transition-colors">
+                Create one
               </Link>
             </p>
           </div>
