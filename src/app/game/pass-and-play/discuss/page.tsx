@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipForward } from "lucide-react";
-import { AvatarSVG } from "@/components/game/AvatarSVG";
+import { PlayerAvatar } from "@/components/icons/PlayerAvatar";
 
 interface PlayerRole {
   player: { name: string; color: string };
@@ -179,7 +179,7 @@ export default function DiscussPage() {
                   key={i}
                   className="flex items-center gap-3 p-3 bg-white/5 rounded-xl"
                 >
-                  <AvatarSVG color={r.player.color} size={36} />
+                  <PlayerAvatar color={r.player.color} size={36} initial={r.player.name[0]} />
                   <span className="font-medium">{r.player.name}</span>
                 </div>
               ))}

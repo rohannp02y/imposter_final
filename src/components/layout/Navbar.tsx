@@ -3,7 +3,8 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
-import { GamepadIcon, MenuIcon, XIcon } from "@/components/icons/SvgIcons";
+import { MenuIcon, XIcon } from "@/components/icons/SvgIcons";
+import { Logo } from "@/components/icons/Logo";
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -14,9 +15,7 @@ export function Navbar() {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-24">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-lg bg-crimson/10 flex items-center justify-center group-hover:bg-crimson/20 transition-colors">
-              <GamepadIcon size={16} className="text-crimson" />
-            </div>
+            <Logo size={32} />
             <span className="text-display text-sm font-medium tracking-ultra-tight text-ink-primary hidden sm:block">
               IMPOSTER
             </span>
@@ -42,7 +41,7 @@ export function Navbar() {
                 <Link href="/auth/login" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
                   Sign In
                 </Link>
-                <Link href="/auth/register" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
+                <Link href="/auth/register" className="btn-primary text-xs py-2 px-4 font-mono uppercase tracking-wider">
                   Sign Up
                 </Link>
               </div>
@@ -80,7 +79,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
+                  className="block py-2 text-crimson text-sm font-mono uppercase tracking-wider"
                   onClick={() => setMobileOpen(false)}
                 >
                   Sign Up

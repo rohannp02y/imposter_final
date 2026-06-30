@@ -10,8 +10,8 @@ import {
   ShieldIcon,
   TagsIcon,
   ChevronRightIcon,
-  NepalFlagIcon,
 } from "@/components/icons/SvgIcons";
+import { Logo } from "@/components/icons/Logo";
 
 const WORDS = [
   "MOMO", "DAL BHAT", "SEL ROTI", "DHARARA", "RAJESH HAMAL",
@@ -20,6 +20,7 @@ const WORDS = [
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 0.95]);
@@ -57,7 +58,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="flex items-center gap-3 mb-8">
-                <NepalFlagIcon size={18} className="text-crimson" />
+                <Logo size={20} />
                 <span className="text-ink-muted text-xs font-mono uppercase tracking-[0.2em]">
                   Nepal Edition
                 </span>
@@ -83,13 +84,13 @@ export default function HomePage() {
                   <span>Begin Session</span>
                   <ChevronRightIcon size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link
-                  href="/game/lobby"
+                <button
+                  onClick={() => setShowComingSoon(true)}
                   className="btn-ghost flex items-center justify-center gap-3 text-base"
                 >
                   <GlobeIcon size={18} />
                   <span>Connect Online</span>
-                </Link>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -283,7 +284,7 @@ export default function HomePage() {
       <footer className="relative py-12 px-6 md:px-12 lg:px-24 border-t border-hairline">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <NepalFlagIcon size={14} className="text-crimson" />
+            <Logo size={16} />
             <span className="text-ink-muted text-xs font-mono uppercase tracking-widest">
               Imposter Nepal
             </span>
@@ -301,6 +302,38 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Coming Soon Modal */}
+      {showComingSoon && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
+          onClick={() => setShowComingSoon(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="card-surface p-8 max-w-sm w-full text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-center mb-6">
+              <Logo size={56} />
+            </div>
+            <h2 className="text-display text-2xl text-ink-primary mb-2">Coming Soon</h2>
+            <p className="text-ink-secondary text-sm font-light mb-6">
+              Online multiplayer is in development. For now, gather your friends and play Pass &amp; Play.
+            </p>
+            <button
+              onClick={() => setShowComingSoon(false)}
+              className="btn-primary w-full py-3"
+            >
+              Got it
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

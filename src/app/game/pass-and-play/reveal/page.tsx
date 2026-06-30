@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getWordsFromSelection } from "@/lib/packs";
-import { AvatarSVG } from "@/components/game/AvatarSVG";
+import { PlayerAvatar, SecretIcon, ImposterIcon, CrewIcon } from "@/components/icons/PlayerAvatar";
 
 interface Player {
   name: string;
@@ -153,7 +153,7 @@ export default function RevealPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="text-6xl mb-4">🤫</div>
+          <SecretIcon size={80} />
           <h1 className="text-3xl font-bold mb-2">Everyone Has Seen Their Role</h1>
           <p className="text-white/50 mb-8">Pass the phone to the first player and start discussing!</p>
           <button onClick={handleStartDiscussion} className="btn-primary text-lg px-8 py-4">
@@ -180,7 +180,7 @@ export default function RevealPage() {
               <div className="card p-8">
                 <div className="text-sm text-white/50 mb-2">Pass phone to</div>
                 <div className="flex justify-center mb-4">
-                  <AvatarSVG color={currentPlayer.player.color} size={80} />
+                  <PlayerAvatar color={currentPlayer.player.color} size={80} initial={currentPlayer.player.name[0]} />
                 </div>
                 <h2 className="text-3xl font-bold mb-8">{currentPlayer.player.name}</h2>
 
@@ -211,13 +211,17 @@ export default function RevealPage() {
                 }`}
               >
                 <div className="flex justify-center mb-4">
-                  <AvatarSVG color={currentPlayer.player.color} size={80} />
+                  {currentPlayer.role === "imposter" ? (
+                    <ImposterIcon size={80} />
+                  ) : (
+                    <CrewIcon size={80} />
+                  )}
                 </div>
 
                 <h2 className={`text-4xl font-bold mb-2 ${
                   currentPlayer.role === "imposter" ? "text-red-400" : "text-blue-400"
                 }`}>
-                  {currentPlayer.role === "imposter" ? "IMPOSTER" : "CREWMATE"}
+                  {currentPlayer.role === "imposter" ? "IMPOSTER" : "CREW"}
                 </h2>
 
                 <div className="text-white/50 text-sm mb-4">{currentPlayer.player.name}</div>

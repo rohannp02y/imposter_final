@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { AvatarSVG } from "@/components/game/AvatarSVG";
+import { PlayerAvatar, ImposterIcon } from "@/components/icons/PlayerAvatar";
 
 interface PlayerRole {
   player: { name: string; color: string };
@@ -133,7 +133,7 @@ export default function VotePage() {
                       : "bg-white/5"
                   }`}
                 >
-                  <AvatarSVG color={r.player.color} size={36} />
+                  <PlayerAvatar color={r.player.color} size={36} initial={r.player.name[0]} />
                   <div className="flex-1">
                     <div className="font-medium">{r.player.name}</div>
                     <div className="text-xs">
@@ -147,7 +147,7 @@ export default function VotePage() {
                     </div>
                   </div>
                   {r.role === "imposter" && (
-                    <span className="text-red-400">🗡️</span>
+                    <ImposterIcon size={24} />
                   )}
                 </div>
               ))}
@@ -227,7 +227,7 @@ export default function VotePage() {
                     : "hover:border-imposter-red/30 cursor-pointer"
                 }`}
               >
-                <AvatarSVG color={r.player.color} size={48} />
+                <PlayerAvatar color={r.player.color} size={48} initial={r.player.name[0]} />
                 <span className="flex-1 text-left font-medium text-lg">
                   {r.player.name}
                 </span>

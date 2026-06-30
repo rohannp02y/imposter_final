@@ -5,7 +5,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { EyeIcon, EyeOffIcon, GamepadIcon, LoaderIcon } from "@/components/icons/SvgIcons";
+import { EyeIcon, EyeOffIcon, LoaderIcon } from "@/components/icons/SvgIcons";
+import { Logo } from "@/components/icons/Logo";
 import { playSound } from "@/lib/sounds";
 
 export default function LoginPage() {
@@ -48,8 +49,8 @@ export default function LoginPage() {
         className="w-full max-w-sm relative z-10"
       >
         <div className="text-center mb-10">
-          <div className="w-12 h-12 bg-crimson/10 rounded-xl flex items-center justify-center mx-auto mb-6">
-            <GamepadIcon size={20} className="text-crimson" />
+          <div className="flex justify-center mb-6">
+            <Logo size={48} />
           </div>
           <h1 className="text-display text-3xl text-ink-primary mb-2">Welcome back</h1>
           <p className="text-ink-muted text-sm font-mono">Enter the game</p>
