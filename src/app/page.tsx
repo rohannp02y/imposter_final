@@ -14,8 +14,8 @@ import {
 } from "@/components/icons/SvgIcons";
 
 const WORDS = [
-  "MOMO", "DAL BHAT", "SEL ROTI", "NAMASTE", "BHAI",
-  "CHHORA", "DIDI", "AAMAA", "BAU", "DHAKA TOPI",
+  "MOMO", "DAL BHAT", "SEL ROTI", "DHARARA", "RAJESH HAMAL",
+  "HOSTEL RETURNS", "ANMOL KC", "DHAKA TOPI", "GUNDRI", "CHYADI",
 ];
 
 export default function HomePage() {

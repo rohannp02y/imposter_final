@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
-import { GamepadIcon, TrophyIcon, MenuIcon, XIcon } from "@/components/icons/SvgIcons";
+import { GamepadIcon, MenuIcon, XIcon } from "@/components/icons/SvgIcons";
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -22,24 +22,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/game/lobby"
-              className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-2"
-            >
-              <GamepadIcon size={12} />
-              Play
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-2"
-            >
-              <TrophyIcon size={12} />
-              Rankings
-            </Link>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6">
             {status === "loading" ? (
               <div className="w-8 h-8 rounded-full bg-surface animate-pulse" />
             ) : session ? (
@@ -55,11 +38,11 @@ export function Navbar() {
                 </span>
               </Link>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Link href="/auth/login" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
                   Sign In
                 </Link>
-                <Link href="/auth/register" className="btn-primary text-xs py-2 px-4">
+                <Link href="/auth/register" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
                   Sign Up
                 </Link>
               </div>
@@ -78,20 +61,6 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-surface border-t border-hairline">
           <div className="px-6 py-4 space-y-3">
-            <Link
-              href="/game/lobby"
-              className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
-              onClick={() => setMobileOpen(false)}
-            >
-              Play
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
-              onClick={() => setMobileOpen(false)}
-            >
-              Rankings
-            </Link>
             {session ? (
               <Link
                 href="/profile"
@@ -111,7 +80,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="block py-2 text-crimson text-sm font-mono uppercase tracking-wider"
+                  className="block py-2 text-ink-muted hover:text-ink-primary text-sm font-mono uppercase tracking-wider"
                   onClick={() => setMobileOpen(false)}
                 >
                   Sign Up
