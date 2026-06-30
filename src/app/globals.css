@@ -19,10 +19,12 @@
     @apply bg-canvas text-ink-primary antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background-color: #dc2626;
+    background-color: rgba(220, 38, 38, 0.3);
     color: white;
   }
 }
@@ -78,7 +80,10 @@
   }
 
   .text-gradient-crimson {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-crimson to-crimson-glow;
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .noise-overlay {
