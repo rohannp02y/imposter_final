@@ -4,8 +4,14 @@ import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
-  title: "Imposter - Social Deduction Game",
-  description: "Find the imposter among your friends in this thrilling social deduction game",
+  title: "Imposter Nepal Edition - Social Deduction Party Game",
+  description: "Nepal's ultimate party game! Pass the phone, find the imposter. 422+ Nepal words, food, festivals, and slang. Play Pass & Play or Online with friends.",
+  keywords: ["imposter", "nepal", "party game", "social deduction", "among us", "pass and play", "momo", "dal bhat"],
+  openGraph: {
+    title: "Imposter Nepal Edition",
+    description: "Pass the phone, find the imposter! Nepal's social deduction party game.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

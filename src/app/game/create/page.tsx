@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 import { COLORS } from "@/types";
+import { playSound } from "@/lib/sounds";
 
 export default function CreateGamePage() {
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function CreateGamePage() {
 
     const cleanupCreated = on("room:created", (data: unknown) => {
       const d = data as { code: string };
+      playSound("player_join");
       setRoomCode(d.code);
       setCreated(true);
     });
@@ -81,6 +83,7 @@ export default function CreateGamePage() {
 
   const handleCreate = async () => {
     if (!userId || !username) return;
+    playSound("button_click");
     setLoading(true);
 
     emit("room:create", {
@@ -93,6 +96,7 @@ export default function CreateGamePage() {
   };
 
   const handleCopyCode = () => {
+    playSound("button_click");
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

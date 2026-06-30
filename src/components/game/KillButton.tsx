@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { GameState } from "@/types";
+import { playSound } from "@/lib/sounds";
 
 interface KillButtonProps {
   game: GameState;
@@ -41,6 +42,7 @@ export function KillButton({ game, currentUserId, onKill }: KillButtonProps) {
 
   const handleKill = (victimId: string) => {
     if (cooldown > 0) return;
+    playSound("kill");
     onKill(victimId);
     setCooldown(game.settings.killCooldown);
     setShowKillMenu(false);

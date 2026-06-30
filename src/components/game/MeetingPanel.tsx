@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GameState, ChatMessage } from "@/types";
 import { Send, SkipForward } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 interface MeetingPanelProps {
   game: GameState;
@@ -52,6 +53,7 @@ export function MeetingPanel({
 
   const handleVote = (targetId: string | null) => {
     if (hasVoted || !isAlive) return;
+    playSound("vote");
     setSelectedTarget(targetId);
     onVote(targetId);
     setHasVoted(true);

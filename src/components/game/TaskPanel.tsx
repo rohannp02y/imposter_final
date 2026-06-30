@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { GameState } from "@/types";
+import { playSound } from "@/lib/sounds";
 
 interface TaskPanelProps {
   game: GameState;
@@ -57,7 +58,12 @@ export function TaskPanel({ game, currentUserId, onClose, onTaskClick }: TaskPan
                 ? "bg-green-500/20 border border-green-500/30"
                 : "bg-white/5 border border-white/10 hover:border-imposter-red/30 cursor-pointer"
             }`}
-            onClick={() => !task.completed && onTaskClick(task.id)}
+            onClick={() => {
+              if (!task.completed) {
+                playSound("task_complete");
+                onTaskClick(task.id);
+              }
+            }}
           >
             <div className="flex items-center gap-3">
               <div

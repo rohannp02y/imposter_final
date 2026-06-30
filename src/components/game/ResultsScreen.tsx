@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import type { GameState } from "@/types";
 import { Trophy, RotateCcw, Home } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 interface ResultsScreenProps {
   game: GameState;
@@ -17,6 +19,16 @@ export function ResultsScreen({ game }: ResultsScreenProps) {
       ? JSON.parse(localStorage.getItem("imposter_user") || "{}").id
       : ""
   );
+
+  useEffect(() => {
+    if (game.winner) {
+      const userJson = localStorage.getItem("imposter_user");
+      const user = userJson ? JSON.parse(userJson) : null;
+      const player = game.players.find((p) => p.userId === user?.id);
+      const playerWon = game.winner === player?.role;
+      playSound(playerWon ? "victory" : "defeat");
+    }
+  }, [game.winner, game.players]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">

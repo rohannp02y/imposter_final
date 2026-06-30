@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Gamepad2 } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    playSound("button_click");
     setLoading(true);
 
     try {
@@ -30,6 +32,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
+        playSound("player_join");
         router.push("/game/lobby");
         router.refresh();
       }

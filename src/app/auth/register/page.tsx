@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Gamepad2 } from "lucide-react";
+import { Eye, EyeOff, Gamepad2, Loader2 } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    playSound("button_click");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords don't match");
       return;
     }
 
@@ -30,28 +32,30 @@ export default function RegisterPage() {
       return;
     }
 
-    if (username.length < 3) {
-      setError("Username must be at least 3 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        setError(data.error || "Something went wrong");
+      if (!res.ok) {
+        setError(data.error || "Registration failed");
         return;
       }
 
-      router.push("/auth/login");
+      localStorage.setItem(
+        "imposter_user",
+        JSON.stringify({ id: data.user.id, username: data.user.username })
+      );
+
+      playSound("player_join");
+      router.push("/game/lobby");
+      router.refresh();
     } catch {
       setError("Something went wrong");
     } finally {
@@ -71,7 +75,7 @@ export default function RegisterPage() {
             <Gamepad2 className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="text-white/50 mt-2">Join the hunt for the imposter</p>
+          <p className="text-white/50 mt-2">Join the imposter hunt</p>
         </div>
 
         <div className="card p-6 sm:p-8">
@@ -91,9 +95,10 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input-field"
-                placeholder="Crewmate123"
+                placeholder="CoolPlayer420"
                 required
-                minLength={3}
+                minLength={2}
+                maxLength={20}
               />
             </div>
 
@@ -158,6 +163,9 @@ export default function RegisterPage() {
               disabled={loading}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+              ) : null}
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
@@ -165,7 +173,10 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-white/50 text-sm">
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-imposter-red hover:text-imposter-red-dark">
+              <Link
+                href="/auth/login"
+                className="text-imposter-red hover:text-imposter-red-dark"
+              >
                 Sign in
               </Link>
             </p>

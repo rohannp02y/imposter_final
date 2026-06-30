@@ -1,517 +1,529 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Play,
-  Settings,
-  Timer,
-  Lightbulb,
-  Tag,
-  AlertCircle,
-  HelpCircle,
-  Gamepad2,
-  Plus,
   Trash2,
+  Plus,
+  Settings,
+  ArrowRight,
   ArrowLeft,
-  X,
+  Gamepad2,
+  Copy,
+  Check,
 } from "lucide-react";
-import {
-  getAllPacks,
-  getCustomCategories,
-  getWordsFromSelection,
-  type CategorySelection,
-} from "@/lib/packs";
-import { AvatarSVG, AVATAR_COLORS, getAvatarColor } from "@/components/game/AvatarSVG";
+import { COLORS } from "@/types";
+import { playSound } from "@/lib/sounds";
 
-const HINT_MODES = [
-  { value: "none", label: "No Hints", description: "Imposter is completely blind", icon: "🚫" },
-  { value: "word", label: "Word Hint", description: "Vague clue related to the word", icon: "💡" },
-  { value: "category", label: "Category Hint", description: "Shows the category name only", icon: "📁" },
-];
+interface Player {
+  id: string;
+  name: string;
+  color: string;
+}
 
-const TIMER_OPTIONS = [
-  { label: "Off", value: null },
-  { label: "1 min", value: 60 },
-  { label: "1.5 min", value: 90 },
-  { label: "2 min", value: 120 },
-  { label: "3 min", value: 180 },
-  { label: "5 min", value: 300 },
-];
+const STEPS = {
+  PLAYERS: "players",
+  SETTINGS: "settings",
+  REVEAL: "reveal",
+};
 
 export default function PassAndPlaySetupPage() {
   const router = useRouter();
-  const [players, setPlayers] = useState<{ name: string; color: string }[]>([]);
-  const [newName, setNewName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#3B82F6");
-  const [imposterCount, setImposterCount] = useState(1);
-  const [timerDuration, setTimerDuration] = useState<number | null>(null);
-  const [hintMode, setHintMode] = useState<"none" | "word" | "category">("none");
-  const [selectedCategories, setSelectedCategories] = useState<CategorySelection[]>([]);
-  const [activePackTab, setActivePackTab] = useState<"nepal" | "global" | "custom">("nepal");
-  const [error, setError] = useState("");
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [comingSoon, setComingSoon] = useState(false);
+  const [step, setStep] = useState(STEPS.PLAYERS);
+  const [players, setPlayers] = useState<Player[]>([
+    { id: "1", name: "", color: COLORS[0] },
+    { id: "2", name: "", color: COLORS[1] },
+  ]);
+  const [numImposters, setNumImposters] = useState(1);
+  const [taskCount, setTaskCount] = useState(5);
+  const [discussionTime, setDiscussionTime] = useState(60);
+  const [votingTime, setVotingTime] = useState(30);
+  const [killCooldown, setKillCooldown] = useState(25);
+  const [mapName, setMapName] = useState("skeld");
+  const [revealedPlayers, setRevealedPlayers] = useState<string[]>([]);
+  const [currentRevealIndex, setCurrentRevealIndex] = useState(0);
+  const [shuffledPlayers, setShuffledPlayers] = useState<Player[]>([]);
+  const [imposterIndices, setImposterIndices] = useState<number[]>([]);
 
-  const packs = getAllPacks();
-  const customCategories = getCustomCategories();
-  const totalWords = getWordsFromSelection(selectedCategories, customCategories).length;
-
-  useEffect(() => {
-    if (players.length === 0) {
-      setPlayers([
-        { name: "Player 1", color: AVATAR_COLORS[0] },
-        { name: "Player 2", color: AVATAR_COLORS[1] },
-      ]);
-      setSelectedColor(AVATAR_COLORS[2]);
-    }
-  }, []);
+  const usedColors = players.map((p) => p.color);
+  const availableColors = COLORS.filter((c) => !usedColors.includes(c));
+  const validPlayers = players.filter((p) => p.name.trim());
 
   const addPlayer = () => {
-    setError("");
-    if (players.length >= 10) {
-      setError("Maximum 10 players");
-      return;
-    }
-    const usedColors = players.map((p) => p.color);
-    const nextColor = AVATAR_COLORS.find((c) => !usedColors.includes(c)) || AVATAR_COLORS[players.length % AVATAR_COLORS.length];
-    const nextName = `Player ${players.length + 1}`;
-    setPlayers([...players, { name: newName.trim() || nextName, color: selectedColor }]);
-    setNewName("");
-    setSelectedColor(nextColor);
+    if (players.length >= 10) return;
+    const nextColor =
+      availableColors[0] || COLORS[players.length % COLORS.length];
+    setPlayers([
+      ...players,
+      { id: Date.now().toString(), name: "", color: nextColor },
+    ]);
   };
 
-  const updatePlayerName = (index: number, name: string) => {
-    const updated = [...players];
-    updated[index] = { ...updated[index], name };
-    setPlayers(updated);
+  const removePlayer = (id: string) => {
+    if (players.length <= 3) return;
+    setPlayers(players.filter((p) => p.id !== id));
   };
 
-  const removePlayer = (index: number) => {
-    setPlayers(players.filter((_, i) => i !== index));
-  };
-
-  const cycleColor = (index: number) => {
-    const usedColors = players.filter((_, i) => i !== index).map((p) => p.color);
-    const currentIdx = AVATAR_COLORS.indexOf(players[index].color);
-    let nextIdx = (currentIdx + 1) % AVATAR_COLORS.length;
-    while (usedColors.includes(AVATAR_COLORS[nextIdx])) {
-      nextIdx = (nextIdx + 1) % AVATAR_COLORS.length;
-    }
-    const updated = [...players];
-    updated[index] = { ...updated[index], color: AVATAR_COLORS[nextIdx] };
-    setPlayers(updated);
-  };
-
-  const toggleCategory = (packId: string, categoryId: string) => {
-    setSelectedCategories((prev) => {
-      const exists = prev.some(
-        (s) => s.packId === packId && s.categoryId === categoryId
-      );
-      if (exists) {
-        return prev.filter(
-          (s) => !(s.packId === packId && s.categoryId === categoryId)
-        );
-      }
-      return [...prev, { packId, categoryId }];
-    });
+  const updatePlayer = (id: string, field: keyof Player, value: string) => {
+    setPlayers(
+      players.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    );
   };
 
   const handleStart = () => {
-    setError("");
-    if (players.length < 3) {
-      setError("Need at least 3 players");
-      return;
+    playSound("button_click");
+    const shuffled = [...validPlayers].sort(() => Math.random() - 0.5);
+    const indices: number[] = [];
+    while (indices.length < numImposters) {
+      const idx = Math.floor(Math.random() * shuffled.length);
+      if (!indices.includes(idx)) indices.push(idx);
     }
-    if (players.length < 10 && imposterCount >= players.length) {
-      setError("Imposters must be fewer than players");
-      return;
-    }
-    if (selectedCategories.length === 0) {
-      setError("Select at least 1 category");
-      return;
-    }
-    if (totalWords < 3) {
-      setError("Selected categories need at least 3 words");
-      return;
-    }
+    setShuffledPlayers(shuffled);
+    setImposterIndices(indices);
+    setRevealedPlayers([]);
+    setCurrentRevealIndex(0);
+    setStep(STEPS.REVEAL);
+  };
 
-    const gameState = {
-      players,
-      imposterCount,
-      selectedCategories,
-      hintMode,
-      timerDuration,
-      customCategories: getCustomCategories(),
-    };
+  const handleReveal = () => {
+    playSound("role_reveal");
+    const player = shuffledPlayers[currentRevealIndex];
+    setRevealedPlayers([...revealedPlayers, player.id]);
 
-    localStorage.setItem("imposter-pass-and-play", JSON.stringify(gameState));
-    router.push("/game/pass-and-play/reveal");
+    if (currentRevealIndex < shuffledPlayers.length - 1) {
+      setCurrentRevealIndex(currentRevealIndex + 1);
+    } else {
+      const gameState = {
+        mode: "pass-and-play",
+        players: shuffledPlayers.map((p, i) => ({
+          ...p,
+          role: imposterIndices.includes(i) ? "IMPOSTER" : "CREW",
+        })),
+        settings: {
+          numImposters,
+          taskCount,
+          discussionTime,
+          votingTime,
+          killCooldown,
+          mapName,
+        },
+      };
+      localStorage.setItem("imposter_passplay_game", JSON.stringify(gameState));
+      router.push("/game/pass-and-play/play");
+    }
   };
 
   return (
     <div className="min-h-screen pt-20 pb-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-4 mb-8">
-            <button onClick={() => router.push("/")} className="btn-ghost">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold">
-                <span className="text-gradient">Pass & Play</span>
-              </h1>
-              <p className="text-white/50 text-sm mt-1">
-                Pass the phone, find the imposter — kasto suspense! 🇳🇵
-              </p>
-            </div>
-            <button onClick={() => setShowHowToPlay(true)} className="btn-ghost">
-              <HelpCircle className="w-5 h-5" />
-            </button>
-          </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold text-center mb-2">
+            <span className="text-gradient">Pass & Play</span>
+          </h1>
+          <p className="text-white/50 text-center mb-8">
+            {step === STEPS.PLAYERS && "Add players and pick their colors"}
+            {step === STEPS.SETTINGS && "Configure game settings"}
+            {step === STEPS.REVEAL && "Pass the device to reveal roles"}
+          </p>
 
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
-
-          {/* Players */}
-          <div className="card p-6 mb-6">
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-imposter-red" />
-              Players ({players.length}/10)
-            </h2>
-
-            <div className="space-y-2 mb-4">
-              {players.map((player, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-3 p-2 bg-white/5 rounded-xl"
-                >
-                  <button onClick={() => cycleColor(i)} className="flex-shrink-0">
-                    <AvatarSVG color={player.color} size={40} />
-                  </button>
-                  <input
-                    type="text"
-                    value={player.name}
-                    onChange={(e) => updatePlayerName(i, e.target.value)}
-                    className="input-field flex-1 py-2"
-                    maxLength={12}
-                  />
-                  <button
-                    onClick={() => removePlayer(i)}
-                    className="text-white/30 hover:text-red-400 p-1"
-                    disabled={players.length <= 2}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              ))}
-            </div>
-
-            {players.length < 10 && (
-              <button onClick={addPlayer} className="btn-ghost w-full text-sm">
-                <Plus className="w-4 h-4 inline mr-1" />
-                Add Player
-              </button>
-            )}
-          </div>
-
-          {/* Settings */}
-          <div className="card p-6 mb-6">
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-imposter-red" />
-              Settings
-            </h2>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="text-sm text-white/50 block mb-2">Imposters</label>
-                <select
-                  value={imposterCount}
-                  onChange={(e) => setImposterCount(Number(e.target.value))}
-                  className="input-field"
-                >
-                  {[1, 2, 3].map((n) => (
-                    <option key={n} value={n} disabled={n >= players.length}>
-                      {n} Imposter{n > 1 ? "s" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm text-white/50 block mb-2 flex items-center gap-1">
-                  <Timer className="w-4 h-4" />
-                  Discussion Timer
-                </label>
-                <select
-                  value={timerDuration ?? ""}
-                  onChange={(e) =>
-                    setTimerDuration(e.target.value ? Number(e.target.value) : null)
-                  }
-                  className="input-field"
-                >
-                  {TIMER_OPTIONS.map((opt) => (
-                    <option key={opt.label} value={opt.value ?? ""}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Imposter Hint Mode */}
-            <div>
-              <label className="text-sm text-white/50 block mb-3 flex items-center gap-1">
-                <Lightbulb className="w-4 h-4 text-yellow-400" />
-                Imposter Hint
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {HINT_MODES.map((mode) => (
-                  <button
-                    key={mode.value}
-                    onClick={() => setHintMode(mode.value as "none" | "word" | "category")}
-                    className={`p-3 rounded-xl text-center transition-all border ${
-                      hintMode === mode.value
-                        ? "bg-imposter-red/20 border-imposter-red/30 text-white"
-                        : "bg-white/5 border-transparent text-white/50 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="text-2xl mb-1">{mode.icon}</div>
-                    <div className="text-xs font-medium">{mode.label}</div>
-                    <div className="text-[10px] text-white/40 mt-0.5">{mode.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Category Selection */}
-          <div className="card p-6 mb-6">
-            <h2 className="font-semibold mb-4">
-              Select Categories
-              {selectedCategories.length > 0 && (
-                <span className="text-sm text-imposter-red ml-2">
-                  ({selectedCategories.length} selected, {totalWords}+ words)
-                </span>
-              )}
-            </h2>
-
-            <div className="flex gap-2 mb-4">
-              {(["nepal", "global", "custom"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActivePackTab(tab)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    activePackTab === tab
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {["players", "settings", "reveal"].map((s, i) => (
+              <div key={s} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    step === s
                       ? "bg-imposter-red text-white"
-                      : "bg-white/5 text-white/50 hover:bg-white/10"
+                      : ["players", "settings", "reveal"].indexOf(step) > i
+                      ? "bg-imposter-green text-white"
+                      : "bg-imposter-dark-lighter text-white/50"
                   }`}
                 >
-                  {tab === "nepal" && "🇳🇵 "}
-                  {tab === "global" && "🌍 "}
-                  {tab === "custom" && "✏️ "}
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            {activePackTab === "custom" && (
-              <div className="mb-3">
-                <button
-                  onClick={() => router.push("/custom")}
-                  className="btn-ghost w-full text-sm border border-dashed border-white/20"
-                >
-                  <Plus className="w-4 h-4 inline mr-1" />
-                  Create Custom Category
-                </button>
+                  {["players", "settings", "reveal"].indexOf(step) > i ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                {i < 2 && (
+                  <div
+                    className={`w-12 h-0.5 ${
+                      ["players", "settings", "reveal"].indexOf(step) > i
+                        ? "bg-imposter-green"
+                        : "bg-imposter-dark-lighter"
+                    }`}
+                  />
+                )}
               </div>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {step === STEPS.PLAYERS && (
+              <motion.div
+                key="players"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-4"
+              >
+                <div className="card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Users className="w-5 h-5 text-imposter-red" />
+                      Players ({validPlayers.length})
+                    </h2>
+                    <span className="text-sm text-white/50">Min 3, Max 10</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {players.map((player, index) => (
+                      <motion.div
+                        key={player.id}
+                        layout
+                        className="flex items-center gap-3"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                          style={{ backgroundColor: player.color }}
+                          onClick={() => {
+                            const nextColor =
+                              availableColors[0] ||
+                              COLORS[(index + 1) % COLORS.length];
+                            updatePlayer(player.id, "color", nextColor);
+                          }}
+                          title="Click to change color"
+                        >
+                          {player.name
+                            ? player.name[0]?.toUpperCase()
+                            : index + 1}
+                        </div>
+
+                        <input
+                          type="text"
+                          value={player.name}
+                          onChange={(e) =>
+                            updatePlayer(player.id, "name", e.target.value)
+                          }
+                          className="input-field flex-1"
+                          placeholder={`Player ${index + 1}`}
+                          maxLength={15}
+                        />
+
+                        {players.length > 3 && (
+                          <button
+                            onClick={() => removePlayer(player.id)}
+                            className="text-white/30 hover:text-red-400 transition-colors p-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {players.length < 10 && (
+                    <button
+                      onClick={addPlayer}
+                      className="mt-4 w-full py-3 border-2 border-dashed border-white/20 rounded-xl text-white/50 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Player
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setStep(STEPS.SETTINGS)}
+                  disabled={validPlayers.length < 3}
+                  className="btn-primary w-full py-4 text-lg disabled:opacity-50"
+                >
+                  Next: Game Settings
+                  <ArrowRight className="w-5 h-5 inline ml-2" />
+                </button>
+              </motion.div>
             )}
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {activePackTab === "nepal" &&
-                packs
-                  .find((p) => p.id === "nepal")
-                  ?.categories.map((cat) => (
-                    <CategoryToggle
-                      key={cat.id}
-                      category={cat}
-                      selected={selectedCategories.some(
-                        (s) => s.packId === "nepal" && s.categoryId === cat.id
-                      )}
-                      onToggle={() => toggleCategory("nepal", cat.id)}
-                    />
-                  ))}
+            {step === STEPS.SETTINGS && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-4"
+              >
+                <div className="card p-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-imposter-red" />
+                    Game Settings
+                  </h2>
 
-              {activePackTab === "global" &&
-                packs
-                  .find((p) => p.id === "global")
-                  ?.categories.map((cat) => (
-                    <CategoryToggle
-                      key={cat.id}
-                      category={cat}
-                      selected={selectedCategories.some(
-                        (s) => s.packId === "global" && s.categoryId === cat.id
-                      )}
-                      onToggle={() => toggleCategory("global", cat.id)}
-                    />
-                  ))}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Imposters
+                      </label>
+                      <select
+                        value={numImposters}
+                        onChange={(e) =>
+                          setNumImposters(Number(e.target.value))
+                        }
+                        className="input-field"
+                      >
+                        {[1, 2, 3].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-              {activePackTab === "custom" &&
-                (customCategories.length === 0 ? (
-                  <div className="text-center py-8 text-white/40">
-                    <p>No custom categories yet</p>
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Tasks per Player
+                      </label>
+                      <select
+                        value={taskCount}
+                        onChange={(e) => setTaskCount(Number(e.target.value))}
+                        className="input-field"
+                      >
+                        {[3, 4, 5, 6, 7, 8].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Map
+                      </label>
+                      <select
+                        value={mapName}
+                        onChange={(e) => setMapName(e.target.value)}
+                        className="input-field"
+                      >
+                        <option value="skeld">The Skeld</option>
+                        <option value="mira">Mira HQ</option>
+                        <option value="polus">Polus</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Kill Cooldown
+                      </label>
+                      <select
+                        value={killCooldown}
+                        onChange={(e) =>
+                          setKillCooldown(Number(e.target.value))
+                        }
+                        className="input-field"
+                      >
+                        {[10, 15, 20, 25, 30, 45].map((n) => (
+                          <option key={n} value={n}>
+                            {n}s
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Discussion Time
+                      </label>
+                      <select
+                        value={discussionTime}
+                        onChange={(e) =>
+                          setDiscussionTime(Number(e.target.value))
+                        }
+                        className="input-field"
+                      >
+                        {[0, 15, 30, 45, 60, 90].map((n) => (
+                          <option key={n} value={n}>
+                            {n}s
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-white/50 block mb-2">
+                        Voting Time
+                      </label>
+                      <select
+                        value={votingTime}
+                        onChange={(e) =>
+                          setVotingTime(Number(e.target.value))
+                        }
+                        className="input-field"
+                      >
+                        {[15, 20, 30, 45, 60].map((n) => (
+                          <option key={n} value={n}>
+                            {n}s
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(STEPS.PLAYERS)}
+                    className="btn-secondary flex-1 py-4"
+                  >
+                    <ArrowLeft className="w-5 h-5 inline mr-2" />
+                    Back
+                  </button>
+                  <button
+                    onClick={handleStart}
+                    className="btn-primary flex-1 py-4 text-lg"
+                  >
+                    <Gamepad2 className="w-5 h-5 inline mr-2" />
+                    Start Game
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === STEPS.REVEAL && (
+              <motion.div
+                key="reveal"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="space-y-4"
+              >
+                {currentRevealIndex < shuffledPlayers.length ? (
+                  <div className="card p-8 text-center">
+                    <motion.div
+                      key={currentRevealIndex}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <div className="text-white/50 mb-6">
+                        Pass the device to{" "}
+                        <span className="text-white font-bold">
+                          {shuffledPlayers[currentRevealIndex].name}
+                        </span>
+                      </div>
+
+                      <div
+                        className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center text-white text-3xl font-bold"
+                        style={{
+                          backgroundColor:
+                            shuffledPlayers[currentRevealIndex].color,
+                        }}
+                      >
+                        {shuffledPlayers[currentRevealIndex].name[0]?.toUpperCase()}
+                      </div>
+
+                      <div className="bg-imposter-dark-lighter rounded-xl p-6 mb-6">
+                        <div className="text-sm text-white/50 mb-2">
+                          Your role is
+                        </div>
+                        <div
+                          className={`text-4xl font-bold ${
+                            imposterIndices.includes(currentRevealIndex)
+                              ? "text-red-500"
+                              : "text-blue-500"
+                          }`}
+                        >
+                          {imposterIndices.includes(currentRevealIndex)
+                            ? "IMPOSTER"
+                            : "CREW"}
+                        </div>
+                        {imposterIndices.includes(currentRevealIndex) && (
+                          <div className="text-white/50 text-sm mt-2">
+                            Kill crewmates without getting caught!
+                          </div>
+                        )}
+                        {!imposterIndices.includes(currentRevealIndex) && (
+                          <div className="text-white/50 text-sm mt-2">
+                            Complete tasks and find the imposter!
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleReveal}
+                        className="btn-primary w-full py-4 text-lg"
+                      >
+                        {currentRevealIndex < shuffledPlayers.length - 1
+                          ? "Pass to Next Player"
+                          : "Start Game!"}
+                        <ArrowRight className="w-5 h-5 inline ml-2" />
+                      </button>
+
+                      <div className="mt-4 text-white/30 text-sm">
+                        Tap to reveal role, then hand device to next player
+                      </div>
+                    </motion.div>
                   </div>
                 ) : (
-                  customCategories.map((cat) => (
-                    <CategoryToggle
-                      key={cat.id}
-                      category={cat}
-                      selected={selectedCategories.some(
-                        (s) => s.packId === "custom" && s.categoryId === cat.id
-                      )}
-                      onToggle={() => toggleCategory("custom", cat.id)}
-                    />
-                  ))
-                ))}
-            </div>
-          </div>
+                  <div className="card p-8 text-center">
+                    <div className="text-2xl font-bold mb-4">
+                      All roles revealed!
+                    </div>
+                    <button
+                      onClick={() => {
+                        const gameState = {
+                          mode: "pass-and-play",
+                          players: shuffledPlayers.map((p, i) => ({
+                            ...p,
+                            role: imposterIndices.includes(i)
+                              ? "IMPOSTER"
+                              : "CREW",
+                          })),
+                          settings: {
+                            numImposters,
+                            taskCount,
+                            discussionTime,
+                            votingTime,
+                            killCooldown,
+                            mapName,
+                          },
+                        };
+                        localStorage.setItem(
+                          "imposter_passplay_game",
+                          JSON.stringify(gameState)
+                        );
+                        router.push("/game/pass-and-play/play");
+                      }}
+                      className="btn-primary w-full py-4 text-lg"
+                    >
+                      <Play className="w-5 h-5 inline mr-2" />
+                      Begin Game
+                    </button>
+                  </div>
+                )}
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => setComingSoon(true)}
-              className="btn-secondary flex-1 py-4 text-lg"
-            >
-              🌐 Play Online
-            </button>
-            <button
-              onClick={handleStart}
-              disabled={players.length < 3 || selectedCategories.length === 0}
-              className="btn-primary flex-1 py-4 text-lg disabled:opacity-50"
-            >
-              <Play className="w-5 h-5 inline mr-2" />
-              Start Game
-            </button>
-          </div>
+                <div className="flex items-center justify-center gap-2 text-white/30 text-sm">
+                  {shuffledPlayers.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className={`w-3 h-3 rounded-full ${
+                        revealedPlayers.includes(p.id)
+                          ? "bg-imposter-green"
+                          : i === currentRevealIndex
+                          ? "bg-imposter-yellow animate-pulse"
+                          : "bg-white/20"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
-
-      {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
-
-      {comingSoon && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setComingSoon(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            className="card p-8 max-w-sm w-full text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-5xl mb-4">🚀</div>
-            <h2 className="text-2xl font-bold mb-2">Coming Soon!</h2>
-            <p className="text-white/50 mb-6">
-              Online multiplayer is under development. Stay tuned for real-time matches with friends!
-            </p>
-            <button
-              onClick={() => setComingSoon(false)}
-              className="btn-primary w-full"
-            >
-              Got it
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
     </div>
-  );
-}
-
-function CategoryToggle({
-  category,
-  selected,
-  onToggle,
-}: {
-  category: { id: string; name: string; icon: string; words: { word: string }[] };
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-        selected
-          ? "bg-imposter-red/20 border border-imposter-red/30"
-          : "bg-white/5 border border-transparent hover:bg-white/10"
-      }`}
-    >
-      <span className="text-2xl">{category.icon}</span>
-      <span className="flex-1 text-left font-medium">{category.name}</span>
-      <span className="text-sm text-white/40">{category.words.length} words</span>
-      {selected && (
-        <div className="w-5 h-5 bg-imposter-red rounded-full flex items-center justify-center">
-          <span className="text-white text-xs">✓</span>
-        </div>
-      )}
-    </button>
-  );
-}
-
-function HowToPlayModal({ onClose }: { onClose: () => void }) {
-  const steps = [
-    { num: 1, title: "Add Players", desc: "Enter names or use defaults, choose avatars" },
-    { num: 2, title: "Select Categories", desc: "Pick Nepal or Global word packs" },
-    { num: 3, title: "Reveal Roles", desc: "Pass phone, each player taps to see role" },
-    { num: 4, title: "Discuss", desc: "Give one-word clues, discuss who's sus" },
-    { num: 5, title: "Vote", desc: "Tap to vote for the imposter!" },
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        className="card p-8 max-w-md w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">How to Play</h2>
-          <button onClick={onClose} className="text-white/40 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="space-y-4">
-          {steps.map((step) => (
-            <div key={step.num} className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-imposter-red/20 flex items-center justify-center text-imposter-red font-bold flex-shrink-0">
-                {step.num}
-              </div>
-              <div>
-                <div className="font-medium">{step.title}</div>
-                <div className="text-sm text-white/50">{step.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button onClick={onClose} className="btn-primary w-full mt-6">
-          Got it!
-        </button>
-      </motion.div>
-    </motion.div>
   );
 }

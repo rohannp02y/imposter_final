@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Gamepad2, Trophy, User, LogOut } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -72,7 +73,10 @@ export function Navbar() {
 
           <button
             className="md:hidden text-white/70 hover:text-white"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => {
+              playSound("button_click");
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

@@ -147,6 +147,20 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
 }
@@ -157,4 +171,45 @@
 
 .animate-pulse-ring {
   animation: pulse-ring 1s ease-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Nepal-themed gradient text */
+.text-gradient-nepal {
+  background: linear-gradient(135deg, #EF4444, #A855F7, #3B82F6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Game-specific styles */
+.game-glow {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3), inset 0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+.imposter-shadow {
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+}
+
+.crew-shadow {
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
 }

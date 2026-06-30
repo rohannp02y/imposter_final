@@ -1,105 +1,96 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import {
-  Plus,
-  Search,
   Gamepad2,
   Users,
+  Plus,
+  ArrowRight,
+  Search,
   Globe,
   Lock,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
-
-interface RoomInfo {
-  code: string;
-  hostName: string;
-  playerCount: number;
-  maxPlayers: number;
-  status: string;
-  isPublic: boolean;
-  mapName: string;
-}
+import { useSocket } from "@/hooks/useSocket";
+import type { RoomInfo } from "@/types";
+import { playSound } from "@/lib/sounds";
 
 export default function LobbyPage() {
   const router = useRouter();
-  const [joinCode, setJoinCode] = useState("");
-  const [publicRooms, setPublicRooms] = useState<RoomInfo[]>([]);
+  const [userId, setUserId] = useState("");
+  const [username, setUsername] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"create" | "join" | "browse">("create");
+  const [joining, setJoining] = useState(false);
 
-  const fetchPublicRooms = useCallback(async () => {
-    try {
-      const response = await fetch("/api/games");
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setPublicRooms(data);
-      }
-    } catch {
-      console.error("Failed to fetch rooms");
+  const { emit, on } = useSocket(userId);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("imposter_user");
+    if (stored) {
+      const user = JSON.parse(stored);
+      setUserId(user.id);
+      setUsername(user.username);
+    } else {
+      const tempId = `temp_${Date.now()}`;
+      const tempName = `Player${Math.floor(Math.random() * 9999)}`;
+      localStorage.setItem(
+        "imposter_user",
+        JSON.stringify({ id: tempId, username: tempName })
+      );
+      setUserId(tempId);
+      setUsername(tempName);
     }
   }, []);
 
   useEffect(() => {
-    fetchPublicRooms();
-    const interval = setInterval(fetchPublicRooms, 5000);
-    return () => clearInterval(interval);
-  }, [fetchPublicRooms]);
+    if (!on) return;
 
-  const handleCreateRoom = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/auth/session");
-      const session = await response.json();
-
-      if (!session?.user) {
-        router.push("/auth/login");
-        return;
-      }
-
-      router.push("/game/create");
-    } catch {
-      router.push("/game/create");
-    } finally {
+    const cleanupRooms = on("room:list", (data: unknown) => {
+      setRooms(data as RoomInfo[]);
       setLoading(false);
-    }
+    });
+
+    const cleanupJoined = on("room:joined", (data: unknown) => {
+      const d = data as { code: string };
+      router.push(`/game/${d.code}`);
+    });
+
+    const cleanupError = on("room:error", (data: unknown) => {
+      const d = data as { message: string };
+      alert(d.message);
+      setJoining(false);
+    });
+
+    return () => {
+      cleanupRooms();
+      cleanupJoined();
+      cleanupError();
+    };
+  }, [on]);
+
+  const handleJoin = () => {
+    if (!roomCode.trim()) return;
+    playSound("player_join");
+    setJoining(true);
+    emit("room:join", {
+      code: roomCode.toUpperCase(),
+      userId,
+      username,
+      avatar: "#EF4444",
+      color: "#EF4444",
+    });
   };
 
-  const handleJoinRoom = async () => {
-    if (!joinCode.trim()) return;
+  const handleRefresh = () => {
+    playSound("button_click");
     setLoading(true);
-    try {
-      router.push(`/game/${joinCode.toUpperCase()}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickPlay = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/games");
-      const rooms = await response.json();
-
-      if (Array.isArray(rooms) && rooms.length > 0) {
-        const availableRoom = rooms.find(
-          (r: RoomInfo) => r.playerCount < r.maxPlayers && r.status === "WAITING"
-        );
-
-        if (availableRoom) {
-          router.push(`/game/${availableRoom.code}`);
-          return;
-        }
-      }
-
-      handleCreateRoom();
-    } catch {
-      handleCreateRoom();
-    } finally {
-      setLoading(false);
-    }
+    emit("room:list", {});
   };
 
   return (
@@ -108,179 +99,163 @@ export default function LobbyPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-3xl font-bold text-center mb-2">
             <span className="text-gradient">Game Lobby</span>
           </h1>
-          <p className="text-white/50">
-            Create a room, join friends, or find a public match
+          <p className="text-white/50 text-center mb-8">
+            Join a room or create your own
           </p>
-        </motion.div>
 
-        <div className="flex justify-center gap-2 mb-8">
-          {(["create", "join", "browse"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 rounded-xl font-medium transition-all ${
-                activeTab === tab
-                  ? "bg-imposter-red text-white"
-                  : "bg-white/5 text-white/50 hover:bg-white/10"
-              }`}
-            >
-              {tab === "create" && <Plus className="w-4 h-4 inline mr-2" />}
-              {tab === "join" && <Search className="w-4 h-4 inline mr-2" />}
-              {tab === "browse" && <Globe className="w-4 h-4 inline mr-2" />}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <AnimatePresence mode="wait">
-          {activeTab === "create" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <motion.div
-              key="create"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-4"
+              transition={{ delay: 0.1 }}
             >
-              <div className="card p-6 sm:p-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-imposter-red" />
-                  Create New Room
-                </h2>
-
-                <div className="space-y-4">
-                  <button
-                    onClick={handleCreateRoom}
-                    disabled={loading}
-                    className="btn-primary w-full py-4 text-lg disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                    ) : (
-                      <Gamepad2 className="w-5 h-5 inline mr-2" />
-                    )}
-                    Create Private Room
-                  </button>
-
-                  <button
-                    onClick={handleQuickPlay}
-                    disabled={loading}
-                    className="btn-secondary w-full py-4 text-lg disabled:opacity-50"
-                  >
-                    <Globe className="w-5 h-5 inline mr-2" />
-                    Quick Play
-                  </button>
+              <Link href="/game/create" className="block">
+                <div className="card p-6 hover:border-imposter-red/30 transition-all cursor-pointer group h-full">
+                  <div className="w-14 h-14 rounded-xl bg-imposter-red/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Plus className="w-7 h-7 text-imposter-red" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Create Room</h3>
+                  <p className="text-white/50 text-sm mb-4">
+                    Set up a new game with custom rules and invite your friends
+                  </p>
+                  <div className="flex items-center gap-2 text-imposter-red text-sm font-medium">
+                    <span>Create Game</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
-              </div>
+              </Link>
             </motion.div>
-          )}
 
-          {activeTab === "join" && (
             <motion.div
-              key="join"
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              transition={{ delay: 0.2 }}
             >
-              <div className="card p-6 sm:p-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <Search className="w-5 h-5 text-imposter-red" />
-                  Join Room
-                </h2>
-
-                <div className="flex gap-4">
+              <div className="card p-6 h-full">
+                <div className="w-14 h-14 rounded-xl bg-imposter-blue/20 flex items-center justify-center mb-4">
+                  <Search className="w-7 h-7 text-imposter-blue" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Join Room</h3>
+                <p className="text-white/50 text-sm mb-4">
+                  Enter a room code to join an existing game
+                </p>
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="Enter room code"
-                    className="input-field flex-1 text-center text-2xl tracking-widest font-mono"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                    className="input-field flex-1 uppercase tracking-widest font-mono text-center"
+                    placeholder="ROOM CODE"
                     maxLength={6}
-                    onKeyDown={(e) => e.key === "Enter" && handleJoinRoom()}
                   />
                   <button
-                    onClick={handleJoinRoom}
-                    disabled={loading || !joinCode.trim()}
-                    className="btn-primary disabled:opacity-50"
+                    onClick={handleJoin}
+                    disabled={joining || !roomCode.trim()}
+                    className="btn-primary px-4 disabled:opacity-50"
                   >
-                    {loading ? (
+                    {joining ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      "Join"
+                      <ArrowRight className="w-5 h-5" />
                     )}
                   </button>
                 </div>
               </div>
             </motion.div>
-          )}
+          </div>
 
-          {activeTab === "browse" && (
-            <motion.div
-              key="browse"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-            >
-              <div className="card p-6 sm:p-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-imposter-red" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-imposter-green" />
                   Public Rooms
-                </h2>
+                </h3>
+                <button
+                  onClick={handleRefresh}
+                  className="btn-ghost text-sm flex items-center gap-1"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </button>
+              </div>
 
-                {publicRooms.length === 0 ? (
-                  <div className="text-center py-12 text-white/40">
-                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No public rooms available</p>
-                    <p className="text-sm mt-2">Create one and make it public!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {publicRooms.map((room) => (
-                      <div
-                        key={room.code}
-                        className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-                        onClick={() => router.push(`/game/${room.code}`)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-imposter-red/20 flex items-center justify-center">
-                            <Gamepad2 className="w-5 h-5 text-imposter-red" />
-                          </div>
-                          <div>
-                            <div className="font-medium">{room.hostName}&apos;s Room</div>
-                            <div className="text-sm text-white/50 flex items-center gap-2">
-                              <span className="font-mono">{room.code}</span>
-                              <span>•</span>
-                              <span>{room.mapName}</span>
-                            </div>
-                          </div>
+              {rooms.length === 0 ? (
+                <div className="text-center py-12 text-white/30">
+                  <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No public rooms available</p>
+                  <p className="text-sm mt-1">Create one and invite friends!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {rooms.map((room) => (
+                    <div
+                      key={room.code}
+                      className="flex items-center justify-between bg-imposter-dark-lighter/50 rounded-xl p-4 hover:bg-imposter-dark-lighter transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-imposter-red/20 flex items-center justify-center">
+                          {room.isPublic ? (
+                            <Globe className="w-5 h-5 text-imposter-green" />
+                          ) : (
+                            <Lock className="w-5 h-5 text-white/50" />
+                          )}
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="font-medium">
-                              {room.playerCount}/{room.maxPlayers}
-                            </div>
-                            <div className="text-xs text-white/50">players</div>
+                        <div>
+                          <div className="font-medium">{room.hostName}&apos;s Room</div>
+                          <div className="text-sm text-white/50">
+                            {room.code} • {room.mapName}
                           </div>
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              room.playerCount < room.maxPlayers
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-white/50">
+                          <span className="text-white font-medium">
+                            {room.playerCount}
+                          </span>
+                          /{room.maxPlayers} players
+                        </div>
+                        <button
+                          onClick={() => {
+                            setRoomCode(room.code);
+                            handleJoin();
+                          }}
+                          className="btn-primary py-2 px-4 text-sm"
+                        >
+                          Join
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mt-8 text-center"
+          >
+            <Link
+              href="/game/pass-and-play/setup"
+              className="text-white/50 hover:text-white transition-colors text-sm"
+            >
+              Want to play locally? Try <span className="text-imposter-red font-medium">Pass & Play</span> mode →
+            </Link>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
