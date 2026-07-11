@@ -4,220 +4,103 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
   deleteDoc,
+  addDoc,
   query,
-  where,
   orderBy,
   limit,
   serverTimestamp,
-  onSnapshot,
-  addDoc,
+  getCountFromServer,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import type { Category, WordEntry } from "./packs";
 
-// ─── Types ────────────────────────────────────────────────
+// ─── Admin profile ────────────────────────────────────────
 
-export interface FirebaseUser {
-  uid: string;
-  username: string;
-  email: string;
-  avatar: string;
-  color: string;
-  isAdmin: boolean;
-  createdAt: string;
-}
-
-export interface FirebaseGame {
-  code: string;
-  hostId: string;
-  status: string;
-  maxPlayers: number;
-  minPlayers: number;
-  numImposters: number;
-  mapName: string;
-  discussionTime: number;
-  votingTime: number;
-  killCooldown: number;
-  taskCount: number;
-  isPublic: boolean;
-  isPassAndPlay: boolean;
-  players: string[];
-  createdAt: string;
-}
-
-// ─── User Operations ──────────────────────────────────────
-
-export async function createUser(user: Omit<FirebaseUser, "isAdmin" | "createdAt">) {
-  const userRef = doc(db, "users", user.uid);
-  await setDoc(userRef, {
-    ...user,
-    isAdmin: false,
-    createdAt: serverTimestamp(),
-  });
-
-  const statsRef = doc(db, "userStats", user.uid);
-  await setDoc(statsRef, {
-    gamesPlayed: 0,
-    gamesWon: 0,
-    gamesLost: 0,
-    imposterGames: 0,
-    imposterWins: 0,
-    crewGames: 0,
-    crewWins: 0,
-    totalKills: 0,
-    totalTasks: 0,
-    elo: 1000,
-    winStreak: 0,
-    bestStreak: 0,
-    createdAt: serverTimestamp(),
-  });
-
-  return userRef;
-}
-
-export async function getUser(uid: string): Promise<FirebaseUser | null> {
-  const userRef = doc(db, "users", uid);
-  const snapshot = await getDoc(userRef);
-  if (!snapshot.exists()) return null;
-  return { uid: snapshot.id, ...snapshot.data() } as FirebaseUser;
-}
-
-export async function updateUser(uid: string, data: Partial<FirebaseUser>) {
-  const userRef = doc(db, "users", uid);
-  await updateDoc(userRef, data);
-}
-
-export async function isAdmin(uid: string): Promise<boolean> {
-  const user = await getUser(uid);
-  return user?.isAdmin === true;
-}
-
-// ─── Game Operations ──────────────────────────────────────
-
-export async function createGame(game: Omit<FirebaseGame, "createdAt">) {
-  const gameRef = doc(db, "games", game.code);
-  await setDoc(gameRef, {
-    ...game,
-    createdAt: serverTimestamp(),
-  });
-  return gameRef;
-}
-
-export async function getGame(code: string): Promise<FirebaseGame | null> {
-  const gameRef = doc(db, "games", code);
-  const snapshot = await getDoc(gameRef);
-  if (!snapshot.exists()) return null;
-  return { code: snapshot.id, ...snapshot.data() } as FirebaseGame;
-}
-
-export async function updateGame(code: string, data: Partial<FirebaseGame>) {
-  const gameRef = doc(db, "games", code);
-  await updateDoc(gameRef, data);
-}
-
-export async function getPublicGames(): Promise<FirebaseGame[]> {
-  const q = query(
-    collection(db, "games"),
-    where("isPublic", "==", true),
-    where("status", "==", "WAITING"),
-    orderBy("createdAt", "desc"),
-    limit(20)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    code: doc.id,
-    ...doc.data(),
-  })) as FirebaseGame[];
-}
-
-// ─── Stats Operations ─────────────────────────────────────
-
-export async function updateStats(uid: string, data: Record<string, number>) {
-  const statsRef = doc(db, "userStats", uid);
-  const snapshot = await getDoc(statsRef);
-
-  if (snapshot.exists()) {
-    const current = snapshot.data();
-    const updated: Record<string, number> = {};
-    for (const [key, value] of Object.entries(data)) {
-      updated[key] = (current[key] || 0) + value;
-    }
-    await updateDoc(statsRef, updated);
+export async function isAdminUser(uid: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    return snap.exists() && snap.data()?.isAdmin === true;
+  } catch {
+    return false;
   }
 }
 
-export async function getLeaderboard(count: number = 50) {
-  const q = query(
-    collection(db, "userStats"),
-    orderBy("elo", "desc"),
-    limit(count)
-  );
-  const snapshot = await getDocs(q);
+// ─── Word pack management (admin) ─────────────────────────
 
-  const results = [];
-  for (const doc of snapshot.docs) {
-    const user = await getUser(doc.id);
-    results.push({
-      userId: doc.id,
-      username: user?.username || "Unknown",
-      color: user?.color || "#EF4444",
-      ...doc.data(),
-    });
-  }
-
-  return results;
-}
-
-// ─── Word Pack Operations (Admin) ─────────────────────────
-
-export interface FirestoreCategory {
+export interface AdminPack {
   id: string;
   name: string;
-  icon: string;
-  words: Array<{ word: string; hint?: string }>;
+  emoji?: string;
+  categories: Category[];
 }
 
-export async function getAllPacks(): Promise<Record<string, FirestoreCategory[]>> {
-  const packsSnapshot = await getDocs(collection(db, "packs"));
-  const packs: Record<string, FirestoreCategory[]> = {};
-
-  for (const packDoc of packsSnapshot.docs) {
-    const categoriesSnapshot = await getDocs(
-      collection(db, "packs", packDoc.id, "categories")
-    );
-    packs[packDoc.id] = categoriesSnapshot.docs.map((catDoc) => ({
-      id: catDoc.id,
-      ...catDoc.data(),
-    })) as FirestoreCategory[];
+export async function fetchAdminPacks(): Promise<AdminPack[]> {
+  const packsSnap = await getDocs(collection(db, "packs"));
+  const packs: AdminPack[] = [];
+  for (const packDoc of packsSnap.docs) {
+    const data = packDoc.data() as { name?: string; emoji?: string };
+    const catsSnap = await getDocs(collection(db, "packs", packDoc.id, "categories"));
+    const categories = catsSnap.docs
+      .map((c) => ({ id: c.id, packId: packDoc.id, ...(c.data() as Omit<Category, "id" | "packId">) }))
+      .sort((a, b) => ((a as { order?: number }).order ?? 99) - ((b as { order?: number }).order ?? 99));
+    packs.push({ id: packDoc.id, name: data.name || packDoc.id, emoji: data.emoji, categories });
   }
-
+  packs.sort((a, b) => (a.id === "nepal" ? -1 : b.id === "nepal" ? 1 : 0));
   return packs;
 }
 
-export async function saveCategory(packId: string, category: FirestoreCategory) {
-  const catRef = doc(db, "packs", packId, "categories", category.id);
-  await setDoc(catRef, {
-    name: category.name,
-    icon: category.icon,
-    words: category.words,
-  });
+export async function saveCategory(
+  packId: string,
+  categoryId: string,
+  data: { name: string; icon: string; words: WordEntry[]; order?: number }
+): Promise<void> {
+  await setDoc(doc(db, "packs", packId, "categories", categoryId), data);
 }
 
-export async function deleteCategory(packId: string, categoryId: string) {
-  const catRef = doc(db, "packs", packId, "categories", categoryId);
-  await deleteDoc(catRef);
+export async function deleteCategory(packId: string, categoryId: string): Promise<void> {
+  await deleteDoc(doc(db, "packs", packId, "categories", categoryId));
 }
 
-// ─── Real-time Listeners ──────────────────────────────────
+/** Invalidate the game's local pack cache after admin edits. */
+export function clearPacksCache() {
+  try {
+    localStorage.removeItem("imposter-packs-cache-v2");
+  } catch {}
+}
 
-export function onGameUpdate(code: string, callback: (game: FirebaseGame | null) => void) {
-  const gameRef = doc(db, "games", code);
-  return onSnapshot(gameRef, (snapshot) => {
-    if (snapshot.exists()) {
-      callback({ code: snapshot.id, ...snapshot.data() } as FirebaseGame);
-    } else {
-      callback(null);
-    }
-  });
+// ─── Game monitoring ──────────────────────────────────────
+
+export interface GameLog {
+  id: string;
+  playerCount: number;
+  imposterCount: number;
+  categories: string[];
+  hintWord: boolean;
+  hintCategory: boolean;
+  createdAt: Timestamp | null;
+}
+
+/** Fire-and-forget anonymous log written when a round starts. */
+export function logGameStart(data: {
+  playerCount: number;
+  imposterCount: number;
+  categories: string[];
+  hintWord: boolean;
+  hintCategory: boolean;
+}) {
+  try {
+    addDoc(collection(db, "gameLogs"), { ...data, createdAt: serverTimestamp() }).catch(() => {});
+  } catch {}
+}
+
+export async function fetchGameStats(): Promise<{ total: number; recent: GameLog[] }> {
+  const coll = collection(db, "gameLogs");
+  const [countSnap, recentSnap] = await Promise.all([
+    getCountFromServer(coll),
+    getDocs(query(coll, orderBy("createdAt", "desc"), limit(20))),
+  ]);
+  const recent = recentSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<GameLog, "id">) }));
+  return { total: countSnap.data().count, recent };
 }

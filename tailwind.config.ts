@@ -18,11 +18,11 @@ const config: Config = {
         },
         ink: {
           primary: "#fafafa",
-          secondary: "#a1a1aa",
-          muted: "#52525b",
-          ghost: "#27272a",
+          secondary: "#c2c2cb",
+          muted: "#94949f",
+          ghost: "#4b4b55",
         },
-        hairline: "#18181b",
+        hairline: "#2a2a32",
       },
       fontFamily: {
         display: [

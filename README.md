@@ -1,96 +1,41 @@
-# Imposter - Social Deduction Game
+# Imposter — Nepal Edition
 
-A full-stack social deduction game built with Next.js, Socket.io, PostgreSQL, and Redis
+A pass-and-play social deduction party game. Everyone gets the same secret word — except the imposter. Give clues, spot the fake, vote them out.
 
-## Features
+**Live:** https://imposter-app-three.vercel.app
 
-- **Real-time Multiplayer** - Play with friends via room codes or public matchmaking
-- **Pass & Play** - Local multiplayer on the same device
-- **Game Mechanics** - Kill cooldowns, emergency meetings, voting, task system
-- **Multiple Maps** - The Skeld, Mira HQ, Polus
-- **User System** - Registration, profiles, stats tracking
-- **Leaderboards** - ELO-based ranking system
-- **Mobile Ready** - Architecture supports React Native conversion
+## How it works
 
-## Tech Stack
+- 3–10 players on one device, names pre-filled as Player 1…N (editable)
+- 19 word categories across Nepal 🇳🇵 and Global 🌍 packs (600+ words), plus device-local custom categories
+- Optional imposter hints, toggleable per game:
+  - **Word Hint** — a subtle related clue (e.g. Momo → "Coke ko saathi")
+  - **Theme Hint** — the category of the secret word
+- Discussion timer, per-player voting, role reveal
+- *Gaun Khane Katha* category: the answer is the word, the riddle is the imposter's hint
 
-- **Frontend**: Next.js 14, React, Tailwind CSS, Framer Motion
-- **Backend**: Next.js API Routes, Socket.io
-- **Database**: PostgreSQL (Prisma ORM), Redis
-- **Auth**: NextAuth.js
-- **State**: Zustand
+## Stack
 
-## Getting Started
+- Next.js 14 (App Router) + Tailwind CSS + Framer Motion
+- Firebase: Firestore (word packs, anonymous game logs) + Auth (admin panel)
+- Word packs load from Firestore with the bundled JSON in `src/data/` as offline fallback/seed
 
-### Prerequisites
+## Admin panel
 
-- Node.js 18+
-- PostgreSQL
-- Redis
+Lives on a separate domain (`NEXT_PUBLIC_ADMIN_HOST`), routed by `middleware.ts`; the public site has no reference or route to it. Sign-in is Firebase email/password (usernames map to `<user>@nepaliimposter.app`), and Firestore rules only allow pack writes for users whose `users/{uid}.isAdmin` is true. Admins can monitor played rounds and add/edit/delete categories, words, and hints.
 
-### Installation
+## Development
 
 ```bash
-# Clone the repository
-git clone <repo-url>
-cd imposter-app
-
-# Install dependencies
 npm install
+npm run dev          # http://localhost:3000 (admin at /admin on localhost only)
+npm run build
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your database credentials
+# reseed Firestore packs from src/data:
+ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed
 
-# Generate Prisma client
-npx prisma generate
-
-# Push database schema
-npx prisma db push
-
-# Start the development server
-npm run dev
+# deploy Firestore rules:
+firebase deploy --only firestore:rules
 ```
 
-The app will be available at `http://localhost:3000`.
-
-## Game Rules
-
-### Crewmates
-- Complete all tasks to win
-- Call emergency meetings to vote out suspects
-- Report dead bodies
-
-### Imposters
-- Eliminate crewmates without getting caught
-- Sabotage (coming soon)
-- Win by reducing crew to equal or fewer imposters
-
-## Project Structure
-
-```
-imposter-app/
-├── prisma/           # Database schema
-├── src/
-│   ├── app/          # Next.js pages and API routes
-│   ├── components/   # React components
-│   ├── hooks/        # Custom hooks
-│   ├── lib/          # Utilities and services
-│   ├── store/        # Zustand stores
-│   └── types/        # TypeScript types
-├── server.ts         # Custom server with Socket.io
-└── package.json
-```
-
-## Mobile Conversion
-
-This app is designed for easy conversion to React Native:
-
-1. Extract game logic from components into shared hooks
-2. Replace web-specific components with React Native equivalents
-3. Use the same Socket.io server for real-time communication
-4. Keep the same PostgreSQL + Redis backend
-
-## License
-
-MIT
+Environment variables (see Vercel project settings): `NEXT_PUBLIC_FIREBASE_*`, `NEXT_PUBLIC_FIREBASE_DATABASE_ID` (named Firestore DB), `NEXT_PUBLIC_ADMIN_HOST`.

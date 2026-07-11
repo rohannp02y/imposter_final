@@ -1,53 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection
+
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // User profiles. isAdmin is only ever set from the backend/console —
+    // clients (even the owner) cannot write their own profile.
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
     }
 
-    // User stats
-    match /userStats/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Games collection
-    match /games/{gameId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if false;
-
-      // Game players subcollection
-      match /players/{playerId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null;
-      }
-
-      // Game messages subcollection
-      match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
-      }
-    }
-
-    // Word packs (admin only for writes)
+    // Word packs: public read (the game loads them), admin-only writes.
     match /packs/{packId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow write: if isAdmin();
 
       match /categories/{categoryId} {
         allow read: if true;
-        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        allow write: if isAdmin();
       }
     }
 
-    // Leaderboard (public read)
-    match /leaderboard/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    // Anonymous game-start logs for the admin dashboard.
+    match /gameLogs/{logId} {
+      allow create: if request.resource.data.keys().hasOnly(
+          ['playerCount', 'imposterCount', 'categories', 'hintWord', 'hintCategory', 'createdAt'])
+        && request.resource.data.playerCount is int
+        && request.resource.data.playerCount >= 3
+        && request.resource.data.playerCount <= 10
+        && request.resource.data.imposterCount is int
+        && request.resource.data.categories is list
+        && request.resource.data.categories.size() <= 30;
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
   }
 }

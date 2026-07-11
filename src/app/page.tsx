@@ -216,7 +216,7 @@ export default function HomePage() {
               {
                 icon: <GlobeIcon size={20} />,
                 title: "Repeat",
-                desc: "422+ Nepali words across 9 categories. Momo. Dal Bhat. Namaste. Every game is different.",
+                desc: "600+ words across 19 Nepali and global categories. Momo. Dal Bhat. Gaun Khane Katha. Every game is different.",
                 span: "md:col-span-5",
                 delay: 0.3,
               },
@@ -290,14 +290,11 @@ export default function HomePage() {
             </span>
           </div>
           <div className="flex gap-8">
-            <Link href="/admin" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
-              Admin
-            </Link>
-            <Link href="/leaderboard" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
-              Rankings
+            <Link href="/game/pass-and-play/setup" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
+              Play
             </Link>
             <Link href="/custom" className="text-ink-muted hover:text-ink-primary text-xs font-mono uppercase tracking-wider transition-colors">
-              Custom
+              Custom Words
             </Link>
           </div>
         </div>

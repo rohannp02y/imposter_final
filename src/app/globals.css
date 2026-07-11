@@ -31,11 +31,19 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-crimson hover:bg-crimson-deep text-white font-medium py-3 px-6 rounded-lg transition-all duration-200;
+    @apply bg-crimson hover:bg-crimson-deep text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-crimson;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-elevated hover:bg-ink-ghost/40 text-ink-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-ink-ghost hover:border-ink-muted;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-white/5 text-ink-secondary hover:text-ink-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-hairline hover:border-ink-ghost;
+    @apply bg-transparent hover:bg-white/5 text-ink-secondary hover:text-ink-primary font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-ink-ghost hover:border-ink-muted;
+  }
+
+  .card {
+    @apply bg-surface border border-hairline rounded-xl;
   }
 
   .card-glass {
@@ -47,7 +55,7 @@
   }
 
   .input-field {
-    @apply w-full bg-canvas border border-hairline rounded-lg px-4 py-3 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-crimson/50 transition-all;
+    @apply w-full bg-canvas border border-ink-ghost rounded-lg px-4 py-3 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-crimson/60 transition-all;
   }
 
   .text-display {

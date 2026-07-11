@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
   title: "IMPOSTER — Nepal Edition",
-  description: "Someone among you is not who they seem. A social deduction game with 422+ Nepali words.",
+  description: "Someone among you is not who they seem. A social deduction party game with 600+ Nepali and global words.",
   icons: {
     icon: "/favicon.svg",
   },

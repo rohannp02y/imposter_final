@@ -1,127 +1,148 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { fetchGameStats, fetchAdminPacks, type GameLog, type AdminPack } from "@/lib/firestore";
 import {
-  Tags,
-  Users,
-  Gamepad2,
-  TrendingUp,
-  BarChart3,
-  Database,
-} from "lucide-react";
-import { getAllPacks, getCustomCategories, getTotalWordCount, getTotalCategoryCount } from "@/lib/packs";
+  GamepadIcon, TagsIcon, ActivityIcon, MessageIcon, LoaderIcon, CategoryIcon,
+} from "@/components/icons/SvgIcons";
+
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
+  return (
+    <div className="card-surface p-6">
+      <div className="w-10 h-10 rounded-lg bg-crimson/10 text-crimson flex items-center justify-center mb-4">
+        {icon}
+      </div>
+      <div className="text-ink-primary text-3xl font-semibold mb-1">{value}</div>
+      <div className="text-ink-muted text-xs font-mono uppercase tracking-widest">{label}</div>
+    </div>
+  );
+}
+
+function formatWhen(log: GameLog): string {
+  const ts = log.createdAt;
+  if (!ts || typeof ts !== "object" || !("seconds" in ts)) return "—";
+  const d = new Date((ts as { seconds: number }).seconds * 1000);
+  return d.toLocaleString(undefined, {
+    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({
-    totalWords: 0,
-    totalCategories: 0,
-    customCategories: 0,
-    totalPacks: 0,
-  });
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [recent, setRecent] = useState<GameLog[]>([]);
+  const [packs, setPacks] = useState<AdminPack[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const packs = getAllPacks();
-    const custom = getCustomCategories();
-    setStats({
-      totalWords: getTotalWordCount() + custom.reduce((sum, c) => sum + c.words.length, 0),
-      totalCategories: getTotalCategoryCount() + custom.length,
-      customCategories: custom.length,
-      totalPacks: packs.length,
-    });
+    Promise.all([fetchGameStats(), fetchAdminPacks()])
+      .then(([stats, loadedPacks]) => {
+        setTotal(stats.total);
+        setRecent(stats.recent);
+        setPacks(loadedPacks);
+      })
+      .catch(() => setError("Could not load stats."))
+      .finally(() => setLoading(false));
   }, []);
 
-  const cards = [
-    {
-      title: "Categories",
-      value: stats.totalCategories,
-      subtitle: `${stats.totalPacks} packs + ${stats.customCategories} custom`,
-      icon: Tags,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-      href: "/admin/categories",
-    },
-    {
-      title: "Total Words",
-      value: stats.totalWords,
-      subtitle: "Across all packs",
-      icon: BarChart3,
-      color: "text-green-400",
-      bg: "bg-green-500/10",
-      href: "/admin/categories",
-    },
-    {
-      title: "Players",
-      value: "—",
-      subtitle: "Local mode",
-      icon: Users,
-      color: "text-purple-400",
-      bg: "bg-purple-500/10",
-      href: "/admin/users",
-    },
-    {
-      title: "Game Packs",
-      value: stats.totalPacks,
-      subtitle: "Nepal + Global",
-      icon: Gamepad2,
-      color: "text-yellow-400",
-      bg: "bg-yellow-500/10",
-      href: "/admin/categories",
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <LoaderIcon size={26} className="text-crimson" />
+      </div>
+    );
+  }
+
+  const categoryCount = packs.reduce((n, p) => n + p.categories.length, 0);
+  const wordCount = packs.reduce(
+    (n, p) => n + p.categories.reduce((m, c) => m + c.words.length, 0),
+    0
+  );
+  const today = new Date().toDateString();
+  const gamesToday = recent.filter((l) => {
+    const ts = l.createdAt as { seconds?: number } | null;
+    return ts?.seconds && new Date(ts.seconds * 1000).toDateString() === today;
+  }).length;
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-      <p className="text-white/50 mb-8">Overview of your Imposter game</p>
+      <h1 className="text-display text-3xl text-ink-primary mb-2">Dashboard</h1>
+      <p className="text-ink-secondary text-sm mb-8">Live overview of the game.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        {cards.map((card, i) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Link href={card.href} className="card p-6 block hover:border-white/20 transition-colors">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-white/50 text-sm mb-1">{card.title}</div>
-                  <div className="text-3xl font-bold">{card.value}</div>
-                  <div className="text-sm text-white/40 mt-1">{card.subtitle}</div>
-                </div>
-                <div className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center`}>
-                  <card.icon className={`w-6 h-6 ${card.color}`} />
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+      {error && <p className="text-crimson text-sm mb-6">{error}</p>}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <StatCard icon={<GamepadIcon size={18} />} label="Games played" value={total} />
+        <StatCard icon={<ActivityIcon size={18} />} label="Games today" value={recent.length >= 20 && gamesToday === 20 ? "20+" : gamesToday} />
+        <StatCard icon={<TagsIcon size={18} />} label="Categories" value={categoryCount} />
+        <StatCard icon={<MessageIcon size={18} />} label="Words" value={wordCount} />
       </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold mb-4 flex items-center gap-2">
-          <Database className="w-5 h-5 text-imposter-red" />
-          Quick Info
-        </h2>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between py-2 border-b border-white/5">
-            <span className="text-white/50">Nepal Pack</span>
-            <span>9 categories, ~278 words</span>
+      <div className="card-surface overflow-hidden">
+        <div className="px-6 py-4 border-b border-hairline">
+          <span className="text-ink-muted text-xs font-mono uppercase tracking-widest">
+            Recent rounds
+          </span>
+        </div>
+        {recent.length === 0 ? (
+          <div className="p-10 text-center text-ink-muted text-sm">
+            No games logged yet. Rounds appear here as people play.
           </div>
-          <div className="flex justify-between py-2 border-b border-white/5">
-            <span className="text-white/50">Global Pack</span>
-            <span>4 categories, ~144 words</span>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-ink-muted text-xs font-mono uppercase tracking-wider border-b border-hairline">
+                  <th className="text-left px-6 py-3 font-normal">When</th>
+                  <th className="text-left px-6 py-3 font-normal">Players</th>
+                  <th className="text-left px-6 py-3 font-normal">Imposters</th>
+                  <th className="text-left px-6 py-3 font-normal">Hints</th>
+                  <th className="text-left px-6 py-3 font-normal">Categories</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((log) => (
+                  <tr key={log.id} className="border-b border-hairline/50 last:border-0">
+                    <td className="px-6 py-3 text-ink-secondary whitespace-nowrap">{formatWhen(log)}</td>
+                    <td className="px-6 py-3 text-ink-primary">{log.playerCount}</td>
+                    <td className="px-6 py-3 text-crimson-glow">{log.imposterCount}</td>
+                    <td className="px-6 py-3 text-ink-secondary">
+                      {[log.hintWord && "Word", log.hintCategory && "Theme"].filter(Boolean).join(" + ") || "None"}
+                    </td>
+                    <td className="px-6 py-3 text-ink-muted font-mono text-xs">
+                      {(log.categories || []).join(", ") || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="flex justify-between py-2 border-b border-white/5">
-            <span className="text-white/50">Custom Categories</span>
-            <span>{stats.customCategories} created</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-white/50">Database</span>
-            <span className="text-green-400">Connected (PostgreSQL + Redis)</span>
-          </div>
+        )}
+      </div>
+
+      <div className="mt-10">
+        <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-4">
+          Word packs
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {packs.map((pack) => (
+            <div key={pack.id} className="card-surface p-6">
+              <div className="text-ink-primary font-medium mb-4">
+                {pack.emoji} {pack.name}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {pack.categories.map((cat) => (
+                  <span
+                    key={cat.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-canvas border border-hairline text-ink-secondary text-xs font-mono"
+                  >
+                    <CategoryIcon name={cat.icon} size={12} />
+                    {cat.name} · {cat.words.length}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

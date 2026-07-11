@@ -8,6 +8,10 @@ interface PlayerAvatarProps {
   initial?: string;
 }
 
+/**
+ * Player chip — a rounded square with the player's color and initial,
+ * matching the chips used in setup. One visual language everywhere.
+ */
 export function PlayerAvatar({
   color,
   size = 48,
@@ -24,43 +28,27 @@ export function PlayerAvatar({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Background circle */}
-      <circle cx="24" cy="24" r="22" fill={color} opacity="0.15" />
-      <circle cx="24" cy="24" r="22" stroke={color} strokeWidth="2" opacity="0.4" />
-
-      {/* Mask shape — mysterious imposter silhouette */}
-      <path
-        d="M14 20 Q14 14 24 12 Q34 14 34 20 L34 28 Q34 34 24 38 Q14 34 14 28 Z"
-        fill={color}
-        opacity="0.9"
-      />
-
-      {/* Eye cutouts */}
-      <ellipse cx="19" cy="22" rx="3.5" ry="2.5" fill="#090909" />
-      <ellipse cx="29" cy="22" rx="3.5" ry="2.5" fill="#090909" />
-
-      {/* Eye glint */}
-      <ellipse cx="20" cy="21.5" rx="1" ry="0.8" fill="white" opacity="0.6" />
-      <ellipse cx="30" cy="21.5" rx="1" ry="0.8" fill="white" opacity="0.6" />
-
-      {/* Initial letter */}
+      <rect x="2" y="2" width="44" height="44" rx="13" stroke={color} strokeWidth="1.5" opacity="0.35" />
+      <rect x="8" y="8" width="32" height="32" rx="9" fill={color} />
       {showInitial && initial && (
         <text
           x="24"
-          y="33"
+          y="24"
+          dy="0.36em"
           textAnchor="middle"
           fill="white"
-          fontSize="8"
-          fontFamily="Plus Jakarta Sans, sans-serif"
+          fontSize="15"
+          fontFamily="Plus Jakarta Sans, Inter, sans-serif"
           fontWeight="600"
         >
-          {initial}
+          {initial.toUpperCase()}
         </text>
       )}
     </svg>
   );
 }
 
+/** Imposter — incognito hat and glasses, crimson. */
 export function ImposterIcon({ size = 48, className = "" }: { size?: number; className?: string }) {
   return (
     <svg
@@ -71,30 +59,20 @@ export function ImposterIcon({ size = 48, className = "" }: { size?: number; cla
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Danger circle */}
-      <circle cx="24" cy="24" r="22" fill="#dc2626" opacity="0.15" />
-      <circle cx="24" cy="24" r="22" stroke="#dc2626" strokeWidth="2" opacity="0.5" />
-
-      {/* Skull shape */}
-      <path
-        d="M16 20 Q16 12 24 10 Q32 12 32 20 L32 26 Q32 30 28 32 L28 36 L20 36 L20 32 Q16 30 16 26 Z"
-        fill="#dc2626"
-        opacity="0.9"
-      />
-
-      {/* Eye sockets */}
-      <circle cx="20" cy="20" r="3" fill="#090909" />
-      <circle cx="28" cy="20" r="3" fill="#090909" />
-
-      {/* Nose */}
-      <path d="M23 25 L24 27 L25 25" fill="#090909" />
-
-      {/* Teeth */}
-      <path d="M20 32 L20 36 M24 32 L24 36 M28 32 L28 36" stroke="#090909" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="22" stroke="#dc2626" strokeWidth="1.5" opacity="0.35" />
+      <circle cx="24" cy="24" r="22" fill="#dc2626" opacity="0.08" />
+      <g stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 24v-2.5a7 7 0 0 1 14 0V24" />
+        <path d="M13 24h22" />
+        <circle cx="18.5" cy="31.5" r="3.4" />
+        <circle cx="29.5" cy="31.5" r="3.4" />
+        <path d="M21.9 31.5h4.2" />
+      </g>
     </svg>
   );
 }
 
+/** Crew — shield with a check, blue. */
 export function CrewIcon({ size = 48, className = "" }: { size?: number; className?: string }) {
   return (
     <svg
@@ -105,30 +83,17 @@ export function CrewIcon({ size = 48, className = "" }: { size?: number; classNa
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Safe circle */}
-      <circle cx="24" cy="24" r="22" fill="#3b82f6" opacity="0.15" />
-      <circle cx="24" cy="24" r="22" stroke="#3b82f6" strokeWidth="2" opacity="0.4" />
-
-      {/* Shield shape */}
-      <path
-        d="M24 10 L34 16 L34 28 Q34 36 24 40 Q14 36 14 28 L14 16 Z"
-        fill="#3b82f6"
-        opacity="0.8"
-      />
-
-      {/* Checkmark */}
-      <path
-        d="M18 24 L22 28 L30 18"
-        fill="none"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <circle cx="24" cy="24" r="22" stroke="#3b82f6" strokeWidth="1.5" opacity="0.35" />
+      <circle cx="24" cy="24" r="22" fill="#3b82f6" opacity="0.08" />
+      <g stroke="#60a5fa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M24 11l10 3.8v7.4c0 6.3-4 10.6-10 12.8-6-2.2-10-6.5-10-12.8v-7.4L24 11z" />
+        <path d="M19.5 24.5l3.5 3.5 6.5-7.5" />
+      </g>
     </svg>
   );
 }
 
+/** Secret — an eye kept shut, violet. */
 export function SecretIcon({ size = 48, className = "" }: { size?: number; className?: string }) {
   return (
     <svg
@@ -139,28 +104,14 @@ export function SecretIcon({ size = 48, className = "" }: { size?: number; class
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Mysterious glow */}
-      <circle cx="24" cy="24" r="22" fill="#a855f7" opacity="0.1" />
-      <circle cx="24" cy="24" r="22" stroke="#a855f7" strokeWidth="1.5" opacity="0.3" />
-
-      {/* Finger over lips */}
-      <rect x="22" y="12" width="4" height="20" rx="2" fill="#a855f7" opacity="0.8" />
-
-      {/* Lips */}
-      <path
-        d="M16 30 Q24 36 32 30"
-        fill="none"
-        stroke="#a855f7"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16 30 Q24 26 32 30"
-        fill="none"
-        stroke="#a855f7"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <circle cx="24" cy="24" r="22" stroke="#a855f7" strokeWidth="1.5" opacity="0.35" />
+      <circle cx="24" cy="24" r="22" fill="#a855f7" opacity="0.08" />
+      <g stroke="#c084fc" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 22c3.2 4 7 6 11 6s7.8-2 11-6" />
+        <path d="M17 26.5l-2 3" />
+        <path d="M24 28.5v3.5" />
+        <path d="M31 26.5l2 3" />
+      </g>
     </svg>
   );
 }

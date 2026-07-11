@@ -2,191 +2,200 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { PlayerAvatar, ImposterIcon } from "@/components/icons/PlayerAvatar";
+import { SkipIcon, RefreshIcon, HomeIcon, SettingsIcon } from "@/components/icons/SvgIcons";
+import { playSound } from "@/lib/sounds";
 
 interface PlayerRole {
   player: { name: string; color: string };
   role: "crew" | "imposter";
-  word: string | null;
-  hint: string | null;
+}
+
+interface RoundData {
+  roles: PlayerRole[];
+  secret: { word: string; categoryName: string };
 }
 
 export default function VotePage() {
   const router = useRouter();
-  const [roles, setRoles] = useState<PlayerRole[]>([]);
+  const [round, setRound] = useState<RoundData | null>(null);
   const [votes, setVotes] = useState<Record<number, number | "skip">>({});
   const [currentVoter, setCurrentVoter] = useState(0);
-  const [showResults, setShowResults] = useState(false);
-  const [voteResults, setVoteResults] = useState<{
-    tally: Record<string, number>;
-    accused: string[];
+  const [results, setResults] = useState<{
+    tally: { index: number; count: number }[];
+    accused: number[];
     crewWins: boolean;
   } | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("imposter-roles");
+    const stored = localStorage.getItem("imposter-roles-v2");
     if (!stored) {
       router.push("/game/pass-and-play/setup");
       return;
     }
-    setRoles(JSON.parse(stored));
+    setRound(JSON.parse(stored));
   }, [router]);
 
-  const castVote = (targetIndex: number | "skip") => {
-    setVotes({ ...votes, [currentVoter]: targetIndex });
-
-    if (currentVoter < roles.length - 1) {
-      setCurrentVoter(currentVoter + 1);
-    } else {
-      tallyVotes({ ...votes, [currentVoter]: targetIndex });
-    }
-  };
-
-  const tallyVotes = (allVotes: Record<number, number | "skip">) => {
-    const tally: Record<string, number> = {};
-
-    Object.values(allVotes).forEach((target) => {
-      if (target !== "skip" && typeof target === "number") {
-        const name = roles[target].player.name;
-        tally[name] = (tally[name] || 0) + 1;
-      }
-    });
-
-    const maxVotes = Math.max(...Object.values(tally), 0);
-    const accused = Object.entries(tally)
-      .filter(([, count]) => count === maxVotes)
-      .map(([name]) => name);
-
-    const crewWins = accused.some((name) => {
-      const player = roles.find((r) => r.player.name === name);
-      return player?.role === "imposter";
-    });
-
-    setVoteResults({ tally, accused, crewWins });
-    setShowResults(true);
-  };
-
-  const handlePlayAgain = () => {
-    localStorage.removeItem("imposter-roles");
-    localStorage.removeItem("imposter-pass-and-play");
-    router.push("/game/pass-and-play/setup");
-  };
-
-  if (roles.length === 0) {
+  if (!round) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-imposter-red border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-crimson border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (showResults && voteResults) {
+  const roles = round.roles;
+
+  const castVote = (target: number | "skip") => {
+    playSound("vote");
+    const allVotes = { ...votes, [currentVoter]: target };
+    setVotes(allVotes);
+
+    if (currentVoter < roles.length - 1) {
+      setCurrentVoter(currentVoter + 1);
+      return;
+    }
+
+    // Tally by player index so duplicate names can't merge votes.
+    const counts = new Map<number, number>();
+    Object.values(allVotes).forEach((t) => {
+      if (typeof t === "number") counts.set(t, (counts.get(t) || 0) + 1);
+    });
+    const tally = Array.from(counts.entries())
+      .map(([index, count]) => ({ index, count }))
+      .sort((a, b) => b.count - a.count);
+    const maxVotes = tally.length > 0 ? tally[0].count : 0;
+    const accused = tally.filter((t) => t.count === maxVotes).map((t) => t.index);
+    const crewWins = accused.some((i) => roles[i].role === "imposter");
+
+    playSound(crewWins ? "victory" : "defeat");
+    setResults({ tally, accused, crewWins });
+  };
+
+  const handlePlayAgain = () => {
+    // Same players and settings — a fresh word and imposter are drawn on reveal.
+    localStorage.removeItem("imposter-roles-v2");
+    router.push("/game/pass-and-play/reveal");
+  };
+
+  const handleNewSetup = () => {
+    localStorage.removeItem("imposter-roles-v2");
+    router.push("/game/pass-and-play/setup");
+  };
+
+  if (results) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen pt-24 pb-10 px-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg"
+          className="w-full max-w-lg mx-auto"
         >
-          <div className="card p-8 text-center mb-6">
+          <div className="card-surface p-8 text-center mb-5">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="text-6xl mb-4"
+              transition={{ delay: 0.15, type: "spring" }}
+              className="flex justify-center mb-5"
             >
-              {voteResults.crewWins ? "🎉" : "🗡️"}
+              <ImposterIcon size={72} />
             </motion.div>
 
-            <h1 className={`text-4xl font-bold mb-2 ${
-              voteResults.crewWins ? "text-blue-400" : "text-red-400"
-            }`}>
-              {voteResults.crewWins ? "Crew Wins!" : "Imposter Wins!"}
+            <h1
+              className={`text-display text-4xl mb-2 ${
+                results.crewWins ? "text-blue-400" : "text-crimson-glow"
+              }`}
+            >
+              {results.crewWins ? "Crew Wins" : "Imposter Wins"}
             </h1>
-
-            <p className="text-white/50 mb-6">
-              {voteResults.crewWins
-                ? "The crew found the imposter!"
-                : "The imposter survived the vote!"}
+            <p className="text-ink-secondary text-sm mb-6">
+              {results.crewWins
+                ? "The imposter was caught red-handed."
+                : "The imposter slipped through the vote."}
             </p>
 
-            {voteResults.accused.length > 0 && (
-              <div className="bg-white/5 rounded-xl p-4 mb-4">
-                <div className="text-sm text-white/50 mb-2">Accused</div>
-                <div className="font-medium">
-                  {voteResults.accused.join(", ")}
-                </div>
+            <div className="bg-canvas/60 rounded-xl p-4 border border-hairline">
+              <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-1.5">
+                The word was
               </div>
-            )}
+              <div className="text-ink-primary text-xl font-semibold">{round.secret.word}</div>
+              <div className="text-ink-muted text-xs font-mono mt-1">{round.secret.categoryName}</div>
+            </div>
           </div>
 
-          <div className="card p-6 mb-6">
-            <h3 className="font-semibold mb-4">Role Reveal</h3>
+          <div className="card-surface p-6 mb-5">
+            <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-4">
+              Role reveal
+            </div>
             <div className="space-y-2">
               {roles.map((r, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-3 p-3 rounded-xl ${
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
                     r.role === "imposter"
-                      ? "bg-red-500/10 border border-red-500/20"
-                      : "bg-white/5"
+                      ? "bg-crimson/10 border-crimson/30"
+                      : "bg-canvas/40 border-hairline"
                   }`}
                 >
-                  <PlayerAvatar color={r.player.color} size={36} initial={r.player.name[0]} />
-                  <div className="flex-1">
-                    <div className="font-medium">{r.player.name}</div>
-                    <div className="text-xs">
-                      {r.role === "imposter" ? (
-                        <span className="text-red-400">Imposter</span>
-                      ) : (
-                        <span className="text-blue-400">
-                          Crew — "{r.word}"
-                        </span>
-                      )}
+                  <PlayerAvatar color={r.player.color} size={34} initial={r.player.name[0]} />
+                  <div className="flex-1 text-left">
+                    <div className="text-ink-primary text-sm font-medium">{r.player.name}</div>
+                    <div className={`text-xs font-mono ${r.role === "imposter" ? "text-crimson-glow" : "text-blue-400"}`}>
+                      {r.role === "imposter" ? "Imposter" : "Crew"}
                     </div>
                   </div>
-                  {r.role === "imposter" && (
-                    <ImposterIcon size={24} />
+                  {results.accused.includes(i) && (
+                    <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider border border-hairline rounded px-2 py-1">
+                      Accused
+                    </span>
                   )}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="card p-6 mb-6">
-            <h3 className="font-semibold mb-4">Vote Tally</h3>
-            <div className="space-y-2">
-              {Object.entries(voteResults.tally)
-                .sort(([, a], [, b]) => b - a)
-                .map(([name, count]) => (
+          <div className="card-surface p-6 mb-6">
+            <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-4">
+              Vote tally
+            </div>
+            {results.tally.length > 0 ? (
+              <div className="space-y-2">
+                {results.tally.map(({ index, count }) => (
                   <div
-                    key={name}
-                    className="flex items-center justify-between p-2 bg-white/5 rounded-lg"
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-canvas/40 border border-hairline rounded-lg"
                   >
-                    <span>{name}</span>
-                    <span className="font-bold text-imposter-red">
+                    <span className="text-ink-primary text-sm">{roles[index].player.name}</span>
+                    <span className="text-crimson-glow text-sm font-mono">
                       {count} vote{count > 1 ? "s" : ""}
                     </span>
                   </div>
                 ))}
-              {Object.keys(voteResults.tally).length === 0 && (
-                <div className="text-center text-white/40 text-sm py-4">
-                  No votes were cast
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-center text-ink-muted text-sm py-3">Everyone skipped</div>
+            )}
           </div>
 
-          <div className="flex gap-4">
-            <button onClick={handlePlayAgain} className="btn-primary flex-1 py-4 text-lg">
-              Play Again
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handlePlayAgain}
+              className="btn-primary flex-1 py-4 flex items-center justify-center gap-2"
+            >
+              <RefreshIcon size={16} /> Play Again
+            </button>
+            <button
+              onClick={handleNewSetup}
+              className="btn-secondary flex-1 py-4 flex items-center justify-center gap-2"
+            >
+              <SettingsIcon size={16} /> New Setup
             </button>
             <button
               onClick={() => router.push("/")}
-              className="btn-secondary flex-1 py-4 text-lg"
+              className="btn-ghost flex-1 py-4 flex items-center justify-center gap-2"
             >
-              Home
+              <HomeIcon size={16} /> Home
             </button>
           </div>
         </motion.div>
@@ -195,56 +204,51 @@ export default function VotePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-6 pt-16">
       <div className="w-full max-w-md">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">
-              <span className="text-yellow-400">Vote!</span>
+            <span className="text-ink-muted text-xs font-mono uppercase tracking-[0.3em] block mb-3">
+              Voting · {currentVoter + 1} of {roles.length}
+            </span>
+            <h1 className="text-display text-4xl text-ink-primary mb-2">
+              {roles[currentVoter].player.name}
             </h1>
-            <p className="text-white/50">
-              {roles[currentVoter].player.name}, who is the imposter?
-            </p>
-            <div className="text-sm text-white/30 mt-2">
-              Voter {currentVoter + 1} of {roles.length}
-            </div>
+            <p className="text-ink-secondary text-sm">Who is the imposter?</p>
           </div>
 
           <div className="space-y-3">
             {roles.map((r, i) => (
               <motion.button
                 key={i}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={i !== currentVoter ? { scale: 1.01 } : {}}
+                whileTap={i !== currentVoter ? { scale: 0.99 } : {}}
                 onClick={() => castVote(i)}
                 disabled={i === currentVoter}
-                className={`w-full card p-4 flex items-center gap-4 transition-all ${
+                className={`w-full card-surface p-4 flex items-center gap-4 transition-all ${
                   i === currentVoter
                     ? "opacity-40 cursor-not-allowed"
-                    : "hover:border-imposter-red/30 cursor-pointer"
+                    : "hover:border-crimson/40 cursor-pointer"
                 }`}
               >
-                <PlayerAvatar color={r.player.color} size={48} initial={r.player.name[0]} />
-                <span className="flex-1 text-left font-medium text-lg">
+                <PlayerAvatar color={r.player.color} size={44} initial={r.player.name[0]} />
+                <span className="flex-1 text-left text-ink-primary font-medium">
                   {r.player.name}
                 </span>
                 {i === currentVoter && (
-                  <span className="text-xs text-white/40">(You)</span>
+                  <span className="text-ink-muted text-xs font-mono">you</span>
                 )}
               </motion.button>
             ))}
 
             <button
               onClick={() => castVote("skip")}
-              className="w-full card p-4 flex items-center gap-4 hover:border-yellow-500/30 transition-all text-white/50"
+              className="w-full card-surface p-4 flex items-center gap-4 hover:border-ink-muted transition-all"
             >
-              <span className="text-3xl">⏭️</span>
-              <span className="flex-1 text-left font-medium text-lg">
-                Skip Vote
-              </span>
+              <div className="w-11 h-11 rounded-full border border-hairline flex items-center justify-center text-ink-muted">
+                <SkipIcon size={18} />
+              </div>
+              <span className="flex-1 text-left text-ink-secondary font-medium">Skip Vote</span>
             </button>
           </div>
         </motion.div>

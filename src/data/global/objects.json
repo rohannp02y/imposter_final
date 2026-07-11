@@ -1,43 +1,148 @@
 {
   "id": "global-objects",
   "name": "Everyday Objects",
-  "icon": "🧸",
+  "icon": "objects",
   "packId": "global",
   "words": [
-    { "word": "Toothbrush", "hint": "Used for dental hygiene" },
-    { "word": "Umbrella", "hint": "Protects from rain" },
-    { "word": "Wallet", "hint": "Holds money and cards" },
-    { "word": "Remote Control", "hint": "Changes TV channels" },
-    { "word": "Headphones", "hint": "Listens to music privately" },
-    { "word": "Backpack", "hint": "Carries books and supplies" },
-    { "word": "Calendar", "hint": "Tracks dates and events" },
-    { "word": "Mirror", "hint": "Shows your reflection" },
-    { "word": "Keys", "hint": "Opens locks" },
-    { "word": "Wallet", "hint": "Holds cash" },
-    { "word": "Watch", "hint": "Worn on wrist, tells time" },
-    { "word": "Sunglasses", "hint": "Protects eyes from sun" },
-    { "word": "Scissors", "hint": "Cuts paper and fabric" },
-    { "word": "Flashlight", "hint": "Portable light source" },
-    { "word": "Pillow", "hint": "Supports your head while sleeping" },
-    { "word": "Blanket", "hint": "Keeps you warm in bed" },
-    { "word": "Mug", "hint": "Drinks coffee or tea" },
-    { "word": "Plate", "hint": "Holds food" },
-    { "word": "Fork", "hint": "Eats food, has prongs" },
-    { "word": "Spoon", "hint": "Scoops liquid food" },
-    { "word": "Knife", "hint": "Cuts food" },
-    { "word": "Towel", "hint": "Dries your body" },
-    { "word": "Soap", "hint": "Cleans your hands" },
-    { "word": "Toothpaste", "hint": "Put on toothbrush" },
-    { "word": "Comb", "hint": "Detangles hair" },
-    { "word": "Hairbrush", "hint": "Styles hair" },
-    { "word": "Broom", "hint": "Sweeps the floor" },
-    { "word": "Dustpan", "hint": "Collects swept dirt" },
-    { "word": "Bucket", "hint": "Carries water" },
-    { "word": "Sponge", "hint": "Absorbs water, cleans surfaces" },
-    { "word": "Chair", "hint": "You sit on it" },
-    { "word": "Lamp", "hint": "Provides light" },
-    { "word": "Curtain", "hint": "Covers windows" },
-    { "word": "Doormat", "hint": "Wipes shoes on" },
-    { "word": "Tissue", "hint": "Blows your nose" }
+    {
+      "word": "Toothbrush",
+      "hint": "Used for dental hygiene"
+    },
+    {
+      "word": "Umbrella",
+      "hint": "Protects from rain"
+    },
+    {
+      "word": "Wallet",
+      "hint": "Holds money and cards"
+    },
+    {
+      "word": "Remote Control",
+      "hint": "Changes TV channels"
+    },
+    {
+      "word": "Headphones",
+      "hint": "Listens to music privately"
+    },
+    {
+      "word": "Backpack",
+      "hint": "Carries books and supplies"
+    },
+    {
+      "word": "Calendar",
+      "hint": "Tracks dates and events"
+    },
+    {
+      "word": "Mirror",
+      "hint": "Shows your reflection"
+    },
+    {
+      "word": "Keys",
+      "hint": "Opens locks"
+    },
+    {
+      "word": "Wallet",
+      "hint": "Holds cash"
+    },
+    {
+      "word": "Watch",
+      "hint": "Worn on wrist, tells time"
+    },
+    {
+      "word": "Sunglasses",
+      "hint": "Protects eyes from sun"
+    },
+    {
+      "word": "Scissors",
+      "hint": "Cuts paper and fabric"
+    },
+    {
+      "word": "Flashlight",
+      "hint": "Portable light source"
+    },
+    {
+      "word": "Pillow",
+      "hint": "Supports your head while sleeping"
+    },
+    {
+      "word": "Blanket",
+      "hint": "Keeps you warm in bed"
+    },
+    {
+      "word": "Mug",
+      "hint": "Drinks coffee or tea"
+    },
+    {
+      "word": "Plate",
+      "hint": "Holds food"
+    },
+    {
+      "word": "Fork",
+      "hint": "Eats food, has prongs"
+    },
+    {
+      "word": "Spoon",
+      "hint": "Scoops liquid food"
+    },
+    {
+      "word": "Knife",
+      "hint": "Cuts food"
+    },
+    {
+      "word": "Towel",
+      "hint": "Dries your body"
+    },
+    {
+      "word": "Soap",
+      "hint": "Cleans your hands"
+    },
+    {
+      "word": "Toothpaste",
+      "hint": "Put on toothbrush"
+    },
+    {
+      "word": "Comb",
+      "hint": "Detangles hair"
+    },
+    {
+      "word": "Hairbrush",
+      "hint": "Styles hair"
+    },
+    {
+      "word": "Broom",
+      "hint": "Sweeps the floor"
+    },
+    {
+      "word": "Dustpan",
+      "hint": "Collects swept dirt"
+    },
+    {
+      "word": "Bucket",
+      "hint": "Carries water"
+    },
+    {
+      "word": "Sponge",
+      "hint": "Absorbs water, cleans surfaces"
+    },
+    {
+      "word": "Chair",
+      "hint": "You sit on it"
+    },
+    {
+      "word": "Lamp",
+      "hint": "Provides light"
+    },
+    {
+      "word": "Curtain",
+      "hint": "Covers windows"
+    },
+    {
+      "word": "Doormat",
+      "hint": "Wipes shoes on"
+    },
+    {
+      "word": "Tissue",
+      "hint": "Blows your nose"
+    }
   ]
 }

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getWordsFromSelection } from "@/lib/packs";
+import { loadPacks, getWordPool, type CategorySelection, type CustomCategory } from "@/lib/packs";
+import { logGameStart } from "@/lib/firestore";
+import { playSound } from "@/lib/sounds";
 import { PlayerAvatar, SecretIcon, ImposterIcon, CrewIcon } from "@/components/icons/PlayerAvatar";
+import { EyeIcon, ArrowRightIcon, LightbulbIcon, TagsIcon } from "@/components/icons/SvgIcons";
 
 interface Player {
   name: string;
@@ -14,10 +17,11 @@ interface Player {
 interface GameState {
   players: Player[];
   imposterCount: number;
-  selectedCategories: { packId: string; categoryId: string }[];
-  hintMode: "none" | "word" | "category";
+  selectedCategories: CategorySelection[];
+  hintWord: boolean;
+  hintCategory: boolean;
   timerDuration: number | null;
-  customCategories: { id: string; name: string; icon: string; words: { word: string; hint?: string }[] }[];
+  customCategories: CustomCategory[];
 }
 
 interface PlayerRole {
@@ -28,102 +32,89 @@ interface PlayerRole {
   categoryName: string | null;
 }
 
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  const cryptoArray = new Uint32Array(shuffled.length);
-  crypto.getRandomValues(cryptoArray);
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = cryptoArray[i] % (i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
+/** Cryptographically random int in [0, max). */
+function randInt(max: number): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] % max;
 }
 
-const VAGUE_HINTS: Record<string, string[]> = {
-  "nepal-celebrities": ["Famous in Nepal", "Known in Nepali media", "Public figure"],
-  "nepal-food": ["Nepali kitchen item", "Found in Nepal", "Edible", "Taste of Nepal"],
-  "nepal-places": ["A location", "Geographic place", "You might visit it", "On a map"],
-  "nepal-movies": ["Entertainment", "On screen", "Watched by many", "A show or film"],
-  "nepal-festivals": ["Celebration", "Special day", "Cultural event", "A tradition"],
-  "nepal-slang": ["A phrase", "Colloquial", "People say it", "Informal language"],
-  "nepal-objects": ["A thing", "You might own one", "Household item", "Physical object"],
-  "nepal-animals": ["A creature", "Lives somewhere", "Has four legs maybe", "In nature"],
-  "nepal-sports": ["An activity", "Competitive", "Players involved", "A game or sport"],
-  "global-objects": ["Everyday item", "You probably have one", "Useful thing", "Common object"],
-  "global-animals": ["A living thing", "Found in nature", "Breathes", "Has a name"],
-  "global-professions": ["A job", "Someone does this", "Work-related", "A career"],
-  "global-movies": ["Entertainment", "On screen", "Watched by many", "A show or film"],
-};
-
-function getVagueHint(categoryId: string, word: string): string {
-  const hints = VAGUE_HINTS[categoryId];
-  if (hints && hints.length > 0) {
-    const hash = word.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-    return hints[hash % hints.length];
+/** Pick `count` distinct random indices from [0, total). */
+function pickRandomIndices(total: number, count: number): Set<number> {
+  const indices = Array.from({ length: total }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
   }
-  return "Think carefully...";
+  return new Set(indices.slice(0, count));
 }
 
 export default function RevealPage() {
   const router = useRouter();
-  const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerRoles, setPlayerRoles] = useState<PlayerRole[]>([]);
   const [currentRevealIndex, setCurrentRevealIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [allRevealed, setAllRevealed] = useState(false);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("imposter-pass-and-play");
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    const stored = localStorage.getItem("imposter-game-v2");
     if (!stored) {
       router.push("/game/pass-and-play/setup");
       return;
     }
     const state: GameState = JSON.parse(stored);
-    setGameState(state);
 
-    const allWords = getWordsFromSelection(
-      state.selectedCategories,
-      state.customCategories || []
-    );
-
-    const shuffledPlayers = shuffleArray(state.players);
-    const shuffledWords = shuffleArray(allWords);
-
-    const roles: PlayerRole[] = shuffledPlayers.map((player, i) => {
-      const isImposter = i < state.imposterCount;
-      const wordEntry = isImposter ? null : shuffledWords[0];
-      let hint: string | null = null;
-      let categoryName: string | null = null;
-
-      if (isImposter && state.hintMode !== "none") {
-        if (state.hintMode === "word") {
-          hint = wordEntry?.hint || getVagueHint(
-            state.selectedCategories[0]?.categoryId || "",
-            wordEntry?.word || ""
-          );
-        } else if (state.hintMode === "category") {
-          const cat = state.selectedCategories[0];
-          categoryName = cat?.categoryId?.replace(/-/g, " ") || "Unknown";
-        }
+    loadPacks().then((packs) => {
+      const pool = getWordPool(packs, state.selectedCategories, state.customCategories || []);
+      if (pool.length === 0 || state.players.length < 3) {
+        router.push("/game/pass-and-play/setup");
+        return;
       }
 
-      return {
-        player,
-        role: isImposter ? "imposter" : "crew",
-        word: wordEntry?.word || shuffledWords[0]?.word || "",
-        hint,
-        categoryName,
-      };
-    });
+      // One secret word per round; every crew member sees the same word.
+      const secret = pool[randInt(pool.length)];
+      // Imposters are chosen independently of the reveal order, so the
+      // passing sequence gives nothing away.
+      const imposterIndices = pickRandomIndices(state.players.length, state.imposterCount);
 
-    setPlayerRoles(roles);
+      const roles: PlayerRole[] = state.players.map((player, i) => {
+        const isImposter = imposterIndices.has(i);
+        return {
+          player,
+          role: isImposter ? "imposter" : "crew",
+          word: isImposter ? null : secret.word,
+          hint: isImposter && state.hintWord ? secret.hint || null : null,
+          categoryName: isImposter && state.hintCategory ? secret.categoryName : null,
+        };
+      });
+
+      localStorage.setItem(
+        "imposter-roles-v2",
+        JSON.stringify({ roles, secret: { word: secret.word, categoryName: secret.categoryName } })
+      );
+      setPlayerRoles(roles);
+
+      logGameStart({
+        playerCount: state.players.length,
+        imposterCount: state.imposterCount,
+        categories: state.selectedCategories.map((c) => c.categoryId),
+        hintWord: state.hintWord,
+        hintCategory: state.hintCategory,
+      });
+    });
   }, [router]);
 
   const handleReveal = useCallback(() => {
+    playSound("role_reveal");
     setIsRevealed(true);
   }, []);
 
   const handleNext = useCallback(() => {
+    playSound("button_click");
     setIsRevealed(false);
     if (currentRevealIndex < playerRoles.length - 1) {
       setCurrentRevealIndex(currentRevealIndex + 1);
@@ -133,66 +124,81 @@ export default function RevealPage() {
   }, [currentRevealIndex, playerRoles.length]);
 
   const handleStartDiscussion = () => {
-    localStorage.setItem("imposter-roles", JSON.stringify(playerRoles));
     router.push("/game/pass-and-play/discuss");
   };
 
-  if (!gameState || playerRoles.length === 0) {
+  if (playerRoles.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-imposter-red border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-crimson border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (allRevealed) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
+          className="text-center max-w-md w-full"
         >
-          <SecretIcon size={80} />
-          <h1 className="text-3xl font-bold mb-2">Everyone Has Seen Their Role</h1>
-          <p className="text-white/50 mb-8">Pass the phone to the first player and start discussing!</p>
-          <button onClick={handleStartDiscussion} className="btn-primary text-lg px-8 py-4">
-            Start Discussion →
-          </button>
+          <div className="card-surface p-10">
+            <div className="flex justify-center mb-6">
+              <SecretIcon size={72} />
+            </div>
+            <h1 className="text-display text-3xl text-ink-primary mb-3">Everyone is in</h1>
+            <p className="text-ink-secondary text-sm mb-8 leading-relaxed">
+              All roles are dealt. Put the phone in the middle and start giving clues.
+            </p>
+            <button
+              onClick={handleStartDiscussion}
+              className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2"
+            >
+              Start Discussion <ArrowRightIcon size={16} />
+            </button>
+          </div>
         </motion.div>
       </div>
     );
   }
 
-  const currentPlayer = playerRoles[currentRevealIndex];
+  const current = playerRoles[currentRevealIndex];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-6 pt-16">
       <div className="w-full max-w-md text-center">
         <AnimatePresence mode="wait">
           {!isRevealed ? (
             <motion.div
               key="tap"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
-              <div className="card p-8">
-                <div className="text-sm text-white/50 mb-2">Pass phone to</div>
-                <div className="flex justify-center mb-4">
-                  <PlayerAvatar color={currentPlayer.player.color} size={80} initial={currentPlayer.player.name[0]} />
+              <div className="card-surface p-8">
+                <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-4">
+                  Pass the phone to
                 </div>
-                <h2 className="text-3xl font-bold mb-8">{currentPlayer.player.name}</h2>
+                <div className="flex justify-center mb-4">
+                  <PlayerAvatar
+                    color={current.player.color}
+                    size={80}
+                    initial={current.player.name[0]}
+                  />
+                </div>
+                <h2 className="text-display text-3xl text-ink-primary mb-8">{current.player.name}</h2>
 
                 <button
                   onClick={handleReveal}
-                  className="btn-primary w-full py-4 text-lg"
+                  className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2"
                 >
-                  Tap to Reveal Role
+                  <EyeIcon size={18} />
+                  Reveal My Role
                 </button>
 
-                <div className="mt-6 text-sm text-white/30">
-                  Player {currentRevealIndex + 1} of {playerRoles.length}
+                <div className="mt-6 text-ink-muted text-xs font-mono">
+                  {currentRevealIndex + 1} of {playerRoles.length}
                 </div>
               </div>
             </motion.div>
@@ -204,61 +210,64 @@ export default function RevealPage() {
               transition={{ duration: 0.5, type: "spring", damping: 20 }}
             >
               <div
-                className={`card p-8 ${
-                  currentPlayer.role === "imposter"
-                    ? "bg-gradient-to-br from-red-900/50 to-red-600/20 border-red-500/50"
-                    : "bg-gradient-to-br from-blue-900/50 to-blue-600/20 border-blue-500/50"
+                className={`rounded-xl border p-8 ${
+                  current.role === "imposter"
+                    ? "bg-gradient-to-br from-crimson/20 to-crimson/5 border-crimson/40"
+                    : "bg-gradient-to-br from-blue-500/15 to-blue-500/5 border-blue-500/40"
                 }`}
               >
                 <div className="flex justify-center mb-4">
-                  {currentPlayer.role === "imposter" ? (
-                    <ImposterIcon size={80} />
-                  ) : (
-                    <CrewIcon size={80} />
-                  )}
+                  {current.role === "imposter" ? <ImposterIcon size={80} /> : <CrewIcon size={80} />}
                 </div>
 
-                <h2 className={`text-4xl font-bold mb-2 ${
-                  currentPlayer.role === "imposter" ? "text-red-400" : "text-blue-400"
-                }`}>
-                  {currentPlayer.role === "imposter" ? "IMPOSTER" : "CREW"}
+                <h2
+                  className={`text-display text-4xl mb-1 ${
+                    current.role === "imposter" ? "text-crimson-glow" : "text-blue-400"
+                  }`}
+                >
+                  {current.role === "imposter" ? "IMPOSTER" : "CREW"}
                 </h2>
+                <div className="text-ink-muted text-sm font-mono mb-6">{current.player.name}</div>
 
-                <div className="text-white/50 text-sm mb-4">{currentPlayer.player.name}</div>
-
-                {currentPlayer.role === "crew" && currentPlayer.word && (
-                  <div className="bg-black/30 rounded-xl p-4 mb-4">
-                    <div className="text-sm text-white/50 mb-1">Your word is</div>
-                    <div className="text-2xl font-bold">{currentPlayer.word}</div>
+                {current.role === "crew" && current.word && (
+                  <div className="bg-canvas/60 rounded-xl p-5 mb-4 border border-hairline">
+                    <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-2">
+                      The secret word
+                    </div>
+                    <div className="text-ink-primary text-2xl font-semibold">{current.word}</div>
                   </div>
                 )}
 
-                {currentPlayer.role === "imposter" && currentPlayer.hint && (
-                  <div className="bg-red-500/10 rounded-xl p-4 mb-4 border border-red-500/20">
-                    <div className="text-sm text-red-300/70 mb-1">Your hint</div>
-                    <div className="text-lg font-medium text-red-300">{currentPlayer.hint}</div>
+                {current.role === "imposter" && (
+                  <div className="space-y-3 mb-4">
+                    <div className="bg-crimson/10 rounded-xl p-4 border border-crimson/25 text-left">
+                      <p className="text-crimson-glow/90 text-sm">
+                        You don&apos;t know the word. Listen, blend in, survive the vote.
+                      </p>
+                    </div>
+                    {current.hint && (
+                      <div className="bg-crimson/10 rounded-xl p-4 border border-crimson/25 text-left">
+                        <div className="flex items-center gap-2 text-crimson-glow/80 text-xs font-mono uppercase tracking-widest mb-1.5">
+                          <LightbulbIcon size={13} /> Word hint
+                        </div>
+                        <div className="text-ink-primary text-lg font-medium">{current.hint}</div>
+                      </div>
+                    )}
+                    {current.categoryName && (
+                      <div className="bg-crimson/10 rounded-xl p-4 border border-crimson/25 text-left">
+                        <div className="flex items-center gap-2 text-crimson-glow/80 text-xs font-mono uppercase tracking-widest mb-1.5">
+                          <TagsIcon size={13} /> Theme
+                        </div>
+                        <div className="text-ink-primary text-lg font-medium">{current.categoryName}</div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {currentPlayer.role === "imposter" && currentPlayer.categoryName && (
-                  <div className="bg-red-500/10 rounded-xl p-4 mb-4 border border-red-500/20">
-                    <div className="text-sm text-red-300/70 mb-1">Category</div>
-                    <div className="text-lg font-medium text-red-300 capitalize">{currentPlayer.categoryName}</div>
-                  </div>
-                )}
+                <p className="text-ink-muted text-xs font-mono mb-6">Memorize it. No peeking, others!</p>
 
-                {currentPlayer.role === "imposter" && !currentPlayer.hint && !currentPlayer.categoryName && (
-                  <div className="bg-red-500/10 rounded-xl p-4 mb-4 border border-red-500/20">
-                    <div className="text-sm text-red-300/70">You don't know the word. Blend in!</div>
-                  </div>
-                )}
-
-                <p className="text-white/40 text-base mb-6">No peeking!</p>
-
-                <button onClick={handleNext} className="btn-secondary w-full py-3">
-                  {currentRevealIndex < playerRoles.length - 1
-                    ? "Done, Pass Phone"
-                    : "Done, Start Game"}
+                <button onClick={handleNext} className="btn-secondary w-full py-3.5">
+                  {currentRevealIndex < playerRoles.length - 1 ? "Got it — Pass the Phone" : "Got it — Everyone's Ready"}
                 </button>
               </div>
             </motion.div>
