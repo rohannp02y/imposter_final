@@ -12,11 +12,12 @@ export function middleware(req: NextRequest) {
   const isLocalhost = host === "localhost" || host === "127.0.0.1";
 
   if (isAdminHost) {
-    // The admin domain serves only the admin panel.
+    // The admin domain serves only the admin panel. Redirect (not rewrite) so
+    // the browser path is /admin and the main-site navbar stays hidden.
     if (!pathname.startsWith("/admin")) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin";
-      return NextResponse.rewrite(url);
+      return NextResponse.redirect(url);
     }
     return NextResponse.next();
   }
