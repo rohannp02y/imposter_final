@@ -39,14 +39,40 @@ function randInt(max: number): number {
   return buf[0] % max;
 }
 
+/** Fisher-Yates shuffle (in-place, returns same array). */
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /** Pick `count` distinct random indices from [0, total). */
 function pickRandomIndices(total: number, count: number): Set<number> {
   const indices = Array.from({ length: total }, (_, i) => i);
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = randInt(i + 1);
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
+  shuffle(indices);
   return new Set(indices.slice(0, count));
+}
+
+// ── Recently-used word tracking (prevents repeats across rounds) ──
+const RECENT_WORDS_KEY = "imposter-recent-words-v2";
+const MAX_RECENT_WORDS = 20;
+
+function getRecentWords(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_WORDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveRecentWord(word: string) {
+  const recent = getRecentWords();
+  // Remove if already present, then push to front
+  const filtered = recent.filter((w) => w !== word);
+  filtered.unshift(word);
+  // Keep only last N
+  localStorage.setItem(RECENT_WORDS_KEY, JSON.stringify(filtered.slice(0, MAX_RECENT_WORDS)));
 }
 
 export default function RevealPage() {
@@ -75,13 +101,28 @@ export default function RevealPage() {
         return;
       }
 
+      // Filter out recently used words for variety on "Play Again"
+      const recentWords = getRecentWords();
+      let filteredPool = pool;
+      if (recentWords.length > 0) {
+        filteredPool = pool.filter((entry) => !recentWords.includes(entry.word));
+      }
+      // If filtering removed everything (small pool), fall back to full pool
+      if (filteredPool.length === 0) filteredPool = pool;
+
       // One secret word per round; every crew member sees the same word.
-      const secret = pool[randInt(pool.length)];
+      const secret = filteredPool[randInt(filteredPool.length)];
+      saveRecentWord(secret.word);
+
       // Imposters are chosen independently of the reveal order, so the
       // passing sequence gives nothing away.
       const imposterIndices = pickRandomIndices(state.players.length, state.imposterCount);
 
-      const roles: PlayerRole[] = state.players.map((player, i) => {
+      // Shuffle reveal order so the passing sequence is random each round
+      const playerIndices = shuffle(Array.from({ length: state.players.length }, (_, i) => i));
+
+      const roles: PlayerRole[] = playerIndices.map((i) => {
+        const player = state.players[i];
         const isImposter = imposterIndices.has(i);
         return {
           player,

@@ -147,6 +147,7 @@ export default function PassAndPlaySetupPage() {
     };
     localStorage.setItem("imposter-game-v2", JSON.stringify(gameState));
     localStorage.removeItem("imposter-roles-v2");
+    localStorage.removeItem("imposter-recent-words-v2");
     router.push("/game/pass-and-play/reveal");
   };
 
