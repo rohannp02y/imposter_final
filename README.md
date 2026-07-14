@@ -2,7 +2,7 @@
 
 A pass-and-play social deduction party game. Everyone gets the same secret word — except the imposter. Give clues, spot the fake, vote them out.
 
-**Live:** https://imposter-app-three.vercel.app
+**Live:** https://nepaliimposter.vercel.app
 
 ## How it works
 
