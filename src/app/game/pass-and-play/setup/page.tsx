@@ -74,23 +74,43 @@ function Toggle({
   );
 }
 
+// ── Saved setup persistence ──
+const SAVED_SETUP_KEY = "imposter-saved-setup-v2";
+
+function loadSavedSetup(): Partial<{
+  players: Player[];
+  imposterCount: number;
+  timerDuration: number | null;
+  selectedCategories: CategorySelection[];
+  hintWord: boolean;
+  hintCategory: boolean;
+}> {
+  try {
+    const raw = localStorage.getItem(SAVED_SETUP_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
 export default function PassAndPlaySetupPage() {
   const router = useRouter();
-  const [players, setPlayers] = useState<Player[]>([
-    { name: "Player 1", color: COLORS[0] },
-    { name: "Player 2", color: COLORS[1] },
-    { name: "Player 3", color: COLORS[2] },
-    { name: "Player 4", color: COLORS[3] },
-  ]);
-  const [imposterCount, setImposterCount] = useState(1);
-  const [timerDuration, setTimerDuration] = useState<number | null>(180);
+  const saved = loadSavedSetup();
+  const [players, setPlayers] = useState<Player[]>(
+    saved.players || [
+      { name: "Player 1", color: COLORS[0] },
+      { name: "Player 2", color: COLORS[1] },
+      { name: "Player 3", color: COLORS[2] },
+      { name: "Player 4", color: COLORS[3] },
+    ]
+  );
+  const [imposterCount, setImposterCount] = useState(saved.imposterCount ?? 1);
+  const [timerDuration, setTimerDuration] = useState<number | null>(saved.timerDuration ?? 180);
   const [packs, setPacks] = useState<Pack[]>(BUNDLED_PACKS);
-  const [selectedCategories, setSelectedCategories] = useState<CategorySelection[]>([
-    { packId: "nepal", categoryId: "nepal-food" },
-  ]);
+  const [selectedCategories, setSelectedCategories] = useState<CategorySelection[]>(
+    saved.selectedCategories || [{ packId: "nepal", categoryId: "nepal-food" }]
+  );
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
-  const [hintWord, setHintWord] = useState(false);
-  const [hintCategory, setHintCategory] = useState(false);
+  const [hintWord, setHintWord] = useState(saved.hintWord ?? false);
+  const [hintCategory, setHintCategory] = useState(saved.hintCategory ?? false);
   const [step, setStep] = useState<"players" | "categories" | "ready">("players");
 
   useEffect(() => {
@@ -146,6 +166,14 @@ export default function PassAndPlaySetupPage() {
       customCategories,
     };
     localStorage.setItem("imposter-game-v2", JSON.stringify(gameState));
+    localStorage.setItem(SAVED_SETUP_KEY, JSON.stringify({
+      players: finalPlayers,
+      imposterCount: Math.min(imposterCount, maxImposters),
+      timerDuration,
+      selectedCategories,
+      hintWord,
+      hintCategory,
+    }));
     localStorage.removeItem("imposter-roles-v2");
     localStorage.removeItem("imposter-recent-words-v2");
     router.push("/game/pass-and-play/reveal");

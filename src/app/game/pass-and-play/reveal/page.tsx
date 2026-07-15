@@ -32,11 +32,16 @@ interface PlayerRole {
   categoryName: string | null;
 }
 
-/** Cryptographically random int in [0, max). */
+/** Cryptographically random int in [0, max) with rejection sampling (no modulo bias). */
 function randInt(max: number): number {
   const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return buf[0] % max;
+  const limit = Math.floor(0xFFFFFFFF / max) * max;
+  let val: number;
+  do {
+    crypto.getRandomValues(buf);
+    val = buf[0];
+  } while (val >= limit);
+  return val % max;
 }
 
 /** Fisher-Yates shuffle (in-place, returns same array). */
@@ -68,11 +73,41 @@ function getRecentWords(): string[] {
 
 function saveRecentWord(word: string) {
   const recent = getRecentWords();
-  // Remove if already present, then push to front
   const filtered = recent.filter((w) => w !== word);
   filtered.unshift(word);
-  // Keep only last N
   localStorage.setItem(RECENT_WORDS_KEY, JSON.stringify(filtered.slice(0, MAX_RECENT_WORDS)));
+}
+
+// ── Last imposter tracking (prevents same player being imposter twice in a row) ──
+const LAST_IMPOSTER_KEY = "imposter-last-indices-v2";
+
+function getLastImposterIndices(): number[] {
+  try {
+    const raw = localStorage.getItem(LAST_IMPOSTER_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveLastImposterIndices(indices: number[]) {
+  localStorage.setItem(LAST_IMPOSTER_KEY, JSON.stringify(indices));
+}
+
+/**
+ * Pick imposter indices, avoiding players who were imposter last round
+ * if possible (only when there are enough non-last-imposter players).
+ */
+function pickImpostersAvoidingLast(total: number, count: number): Set<number> {
+  const lastImposters = getLastImposterIndices();
+  const allIndices = Array.from({ length: total }, (_, i) => i);
+  const nonLast = allIndices.filter((i) => !lastImposters.includes(i));
+
+  // If enough non-last-imposter players, pick from them only
+  if (nonLast.length >= count) {
+    shuffle(nonLast);
+    return new Set(nonLast.slice(0, count));
+  }
+  // Otherwise pick from all (fallback for small player counts)
+  return pickRandomIndices(total, count);
 }
 
 export default function RevealPage() {
@@ -114,9 +149,9 @@ export default function RevealPage() {
       const secret = filteredPool[randInt(filteredPool.length)];
       saveRecentWord(secret.word);
 
-      // Imposters are chosen independently of the reveal order, so the
-      // passing sequence gives nothing away.
-      const imposterIndices = pickRandomIndices(state.players.length, state.imposterCount);
+      // Imposters — avoid last round's imposter(s) if possible
+      const imposterIndices = pickImpostersAvoidingLast(state.players.length, state.imposterCount);
+      saveLastImposterIndices(Array.from(imposterIndices));
 
       // Shuffle reveal order so the passing sequence is random each round
       const playerIndices = shuffle(Array.from({ length: state.players.length }, (_, i) => i));
@@ -276,6 +311,11 @@ export default function RevealPage() {
                       The secret word
                     </div>
                     <div className="text-ink-primary text-2xl font-semibold">{current.word}</div>
+                    {current.categoryName && (
+                      <div className="flex items-center gap-1.5 mt-2 text-blue-400 text-xs font-mono">
+                        <TagsIcon size={12} /> {current.categoryName}
+                      </div>
+                    )}
                   </div>
                 )}
 

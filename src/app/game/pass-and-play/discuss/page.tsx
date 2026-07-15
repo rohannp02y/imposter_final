@@ -2,23 +2,31 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { PlayIcon, PauseIcon, SkipIcon, ArrowRightIcon } from "@/components/icons/SvgIcons";
-import { PlayerAvatar } from "@/components/icons/PlayerAvatar";
+import { motion, AnimatePresence } from "framer-motion";
+import { PlayIcon, PauseIcon, SkipIcon, RefreshIcon, HomeIcon } from "@/components/icons/SvgIcons";
+import { PlayerAvatar, ImposterIcon, CrewIcon, SecretIcon } from "@/components/icons/PlayerAvatar";
 
 interface PlayerRole {
   player: { name: string; color: string };
   role: "crew" | "imposter";
+  word: string | null;
+}
+
+interface RoundData {
+  roles: PlayerRole[];
+  secret: { word: string; categoryName: string };
 }
 
 export default function DiscussPage() {
   const router = useRouter();
   const [roles, setRoles] = useState<PlayerRole[]>([]);
+  const [round, setRound] = useState<RoundData | null>(null);
   const [starter, setStarter] = useState<number>(0);
   const [timerDuration, setTimerDuration] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -28,12 +36,13 @@ export default function DiscussPage() {
       router.push("/game/pass-and-play/setup");
       return;
     }
-    const { roles: loadedRoles } = JSON.parse(storedRoles);
-    setRoles(loadedRoles);
+    const parsed: RoundData = JSON.parse(storedRoles);
+    setRoles(parsed.roles);
+    setRound(parsed);
 
     const buf = new Uint32Array(1);
     crypto.getRandomValues(buf);
-    setStarter(buf[0] % loadedRoles.length);
+    setStarter(buf[0] % parsed.roles.length);
 
     const game = JSON.parse(storedGame);
     setTimerDuration(game.timerDuration);
@@ -69,10 +78,20 @@ export default function DiscussPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  const handleVoting = () => {
+  const handleRevealImposter = () => {
     setIsRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    router.push("/game/pass-and-play/vote");
+    setIsRevealed(true);
+  };
+
+  const handlePlayAgain = () => {
+    localStorage.removeItem("imposter-roles-v2");
+    router.push("/game/pass-and-play/reveal");
+  };
+
+  const handleNewSetup = () => {
+    localStorage.removeItem("imposter-roles-v2");
+    router.push("/game/pass-and-play/setup");
   };
 
   const formatTime = (seconds: number) => {
@@ -90,6 +109,88 @@ export default function DiscussPage() {
   };
 
   const imposterCount = roles.filter((r) => r.role === "imposter").length;
+
+  // ── Reveal screen ──
+  if (isRevealed && round) {
+    return (
+      <div className="min-h-screen pt-24 pb-10 px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg mx-auto"
+        >
+          <div className="card-surface p-8 text-center mb-5">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.15, type: "spring" }}
+              className="flex justify-center mb-5"
+            >
+              <ImposterIcon size={72} />
+            </motion.div>
+
+            <h1 className="text-display text-4xl text-crimson-glow mb-2">The Imposter Was</h1>
+
+            <div className="bg-canvas/60 rounded-xl p-4 border border-hairline mt-4 mb-4">
+              <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-1.5">
+                The word was
+              </div>
+              <div className="text-ink-primary text-xl font-semibold">{round.secret.word}</div>
+              <div className="text-ink-muted text-xs font-mono mt-1">{round.secret.categoryName}</div>
+            </div>
+          </div>
+
+          <div className="card-surface p-6 mb-5">
+            <div className="text-ink-muted text-xs font-mono uppercase tracking-widest mb-4">
+              Role reveal
+            </div>
+            <div className="space-y-2">
+              {roles.map((r, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    r.role === "imposter"
+                      ? "bg-crimson/10 border-crimson/30"
+                      : "bg-canvas/40 border-hairline"
+                  }`}
+                >
+                  <PlayerAvatar color={r.player.color} size={34} initial={r.player.name[0]} />
+                  <div className="flex-1 text-left">
+                    <div className="text-ink-primary text-sm font-medium">{r.player.name}</div>
+                    <div className={`text-xs font-mono ${r.role === "imposter" ? "text-crimson-glow" : "text-blue-400"}`}>
+                      {r.role === "imposter" ? "Imposter" : "Crew"}
+                    </div>
+                  </div>
+                  {r.role === "imposter" ? <ImposterIcon size={20} /> : <CrewIcon size={20} />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handlePlayAgain}
+              className="btn-primary flex-1 py-4 flex items-center justify-center gap-2"
+            >
+              <RefreshIcon size={16} /> Play Again
+            </button>
+            <button
+              onClick={handleNewSetup}
+              className="btn-secondary flex-1 py-4 flex items-center justify-center gap-2"
+            >
+              New Setup
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="btn-ghost flex-1 py-4 flex items-center justify-center gap-2"
+            >
+              <HomeIcon size={16} /> Home
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-8 px-6 relative">
@@ -141,14 +242,14 @@ export default function DiscussPage() {
                   animate={{ opacity: 1 }}
                   className="mt-5 text-crimson-glow font-medium"
                 >
-                  Time&apos;s up — move to voting.
+                  Time&apos;s up — reveal the imposter.
                 </motion.div>
               )}
             </div>
           ) : (
             <div className="card-surface p-6 mb-6 text-center">
               <p className="text-ink-secondary text-sm">
-                No timer — discuss freely, then vote when ready.
+                No timer — discuss freely, then reveal when ready.
               </p>
             </div>
           )}
@@ -174,10 +275,10 @@ export default function DiscussPage() {
           </div>
 
           <button
-            onClick={handleVoting}
+            onClick={handleRevealImposter}
             className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2"
           >
-            Move to Voting <ArrowRightIcon size={16} />
+            Reveal Imposter <ImposterIcon size={18} />
           </button>
         </motion.div>
       </div>
