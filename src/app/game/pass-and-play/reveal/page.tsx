@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadPacks, getWordPool, type CategorySelection, type CustomCategory } from "@/lib/packs";
@@ -116,18 +116,18 @@ export default function RevealPage() {
   const [currentRevealIndex, setCurrentRevealIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [allRevealed, setAllRevealed] = useState(false);
-  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
     const stored = localStorage.getItem("imposter-game-v2");
     if (!stored) {
       router.push("/game/pass-and-play/setup");
       return;
     }
     const state: GameState = JSON.parse(stored);
+
+    // Always read hint settings fresh from game state
+    const hintWord = !!state.hintWord;
+    const hintCategory = !!state.hintCategory;
 
     loadPacks().then((packs) => {
       const pool = getWordPool(packs, state.selectedCategories, state.customCategories || []);
@@ -142,18 +142,14 @@ export default function RevealPage() {
       if (recentWords.length > 0) {
         filteredPool = pool.filter((entry) => !recentWords.includes(entry.word));
       }
-      // If filtering removed everything (small pool), fall back to full pool
       if (filteredPool.length === 0) filteredPool = pool;
 
-      // One secret word per round; every crew member sees the same word.
       const secret = filteredPool[randInt(filteredPool.length)];
       saveRecentWord(secret.word);
 
-      // Imposters — avoid last round's imposter(s) if possible
       const imposterIndices = pickImpostersAvoidingLast(state.players.length, state.imposterCount);
       saveLastImposterIndices(Array.from(imposterIndices));
 
-      // Shuffle reveal order so the passing sequence is random each round
       const playerIndices = shuffle(Array.from({ length: state.players.length }, (_, i) => i));
 
       const roles: PlayerRole[] = playerIndices.map((i) => {
@@ -163,8 +159,8 @@ export default function RevealPage() {
           player,
           role: isImposter ? "imposter" : "crew",
           word: isImposter ? null : secret.word,
-          hint: isImposter && state.hintWord ? secret.hint || null : null,
-          categoryName: isImposter && state.hintCategory ? secret.categoryName : null,
+          hint: isImposter && hintWord ? secret.hint || null : null,
+          categoryName: isImposter && hintCategory ? secret.categoryName : null,
         };
       });
 
@@ -178,8 +174,8 @@ export default function RevealPage() {
         playerCount: state.players.length,
         imposterCount: state.imposterCount,
         categories: state.selectedCategories.map((c) => c.categoryId),
-        hintWord: state.hintWord,
-        hintCategory: state.hintCategory,
+        hintWord,
+        hintCategory,
       });
     });
   }, [router]);
